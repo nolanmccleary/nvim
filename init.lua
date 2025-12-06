@@ -1,12 +1,12 @@
 --  git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
 
 
--- ========================================
--- Line numbers
--- ========================================
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.mouse = "a"
+--vim.opt.keyboard = "unnamedplus"
+vim.o.completeopt = "menuone,noinsert,noselect"
+
 
 -- ========================================
 -- Plugins (using packer)
@@ -23,7 +23,7 @@ end)
 -- ========================================
 -- nvim-tree setup
 -- ========================================
-require('nvim-tree').setup()
+--require('nvim-tree').setup()
 
 -- Keybind to toggle the sidebar (Ctrl+N)
 vim.keymap.set('n', '<C-n>', ':NvimTreeToggle<CR>')
