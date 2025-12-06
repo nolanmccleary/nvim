@@ -1,30 +1,80 @@
 --  git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
 
 
+vim.opt.expandtab = true   
+vim.opt.shiftwidth = 4     
+vim.opt.tabstop = 4        
+vim.opt.smartindent = true
+vim.opt.clipboard = "unnamedplus"
+vim.opt.ignorecase = true  
+vim.opt.smartcase = true   
+vim.opt.termguicolors = true
+vim.opt.signcolumn = "yes" 
+vim.opt.swapfile = false
+vim.opt.undofile = true   
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.mouse = "a"
---vim.opt.keyboard = "unnamedplus"
 vim.o.completeopt = "menuone,noinsert,noselect"
 
-
--- ========================================
--- Plugins (using packer)
--- ========================================
 require('packer').startup(function(use)
     use 'wbthomason/packer.nvim'
-
-    -- File explorer (like VS Code)
     use 'nvim-tree/nvim-tree.lua'
     use 'nvim-tree/nvim-web-devicons'
+
+    use {
+            'nvim-treesitter/nvim-treesitter',
+            run = ':TSUpdate',
+        }
+  
+    use {
+        'nvim-telescope/telescope.nvim',
+        requires = { 'nvim-lua/plenary.nvim' },
+    }
+
+    use 'neovim/nvim-lspconfig'
+    use 'hrsh7th/nvim-cmp'
+    use 'hrsh7th/cmp-nvim-lsp'
+    use 'hrsh7th/cmp-buffer'
+    use 'hrsh7th/cmp-path'
+    use 'L3MON4D3/LuaSnip'
+    use 'saadparwaiz1/cmp_luasnip'
 end)
 
 
--- ========================================
--- nvim-tree setup
--- ========================================
---require('nvim-tree').setup()
+require('nvim-web-devicons').setup {
+    default = true,  -- use default icons when no match
+}
 
--- Keybind to toggle the sidebar (Ctrl+N)
+require('nvim-tree').setup {
+    renderer = {
+        icons = {
+            show = {
+                file = true,
+                folder = true,
+                folder_arrow = true,
+                git = true,   -- git status icons
+            },
+        },
+    },
+    git = {
+        enable = true,
+        ignore = false,
+    },
+}
+
+require('nvim-treesitter.configs').setup {
+    ensure_installed = { "c", "lua", "vim", "vimdoc", "json", "python" }, -- pick what you use
+    highlight = {
+        enable = true,
+    },
+}
+
+
+vim.g.mapleader = ' ' 
 vim.keymap.set('n', '<C-n>', ':NvimTreeToggle<CR>')
+vim.keymap.set('n', '<leader>ff', ':Telescope find_files<CR>')
+vim.keymap.set('n', '<leader>fg', ':Telescope live_grep<CR>')
+vim.keymap.set('n', '<leader>fb', ':Telescope buffers<CR>')
+vim.keymap.set('n', '<leader>fh', ':Telescope help_tags<CR>')
 
