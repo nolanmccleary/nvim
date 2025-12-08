@@ -8,7 +8,7 @@ vim.opt.smartindent = true
 vim.opt.clipboard = "unnamedplus"
 vim.opt.ignorecase = true  
 vim.opt.smartcase = true   
-vim.opt.termguicolors = true
+-- vim.opt.termguicolors = true
 vim.opt.signcolumn = "yes" 
 vim.opt.swapfile = false
 vim.opt.undofile = true   
@@ -71,10 +71,22 @@ require('nvim-treesitter.configs').setup {
 }
 
 
-vim.g.mapleader = ' ' 
-vim.keymap.set('n', '<C-n>', ':NvimTreeToggle<CR>')
-vim.keymap.set('n', '<leader>ff', ':Telescope find_files<CR>')
-vim.keymap.set('n', '<leader>fg', ':Telescope live_grep<CR>')
-vim.keymap.set('n', '<leader>fb', ':Telescope buffers<CR>')
-vim.keymap.set('n', '<leader>fh', ':Telescope help_tags<CR>')
+vim.g.mapleader = ' '
 
+-- keymaps
+vim.keymap.set('n', '<C-n>', ':NvimTreeToggle<CR>', { silent = true })
+
+vim.keymap.set('n', '<leader>ff', ':Telescope find_files<CR>', { silent = true })
+vim.keymap.set('n', '<leader>fg', ':Telescope live_grep<CR>', { silent = true })
+vim.keymap.set('n', '<leader>fb', ':Telescope buffers<CR>', { silent = true })
+vim.keymap.set('n', '<leader>fh', ':Telescope help_tags<CR>', { silent = true })
+
+vim.keymap.set(
+  'n',
+  '<leader>y',
+  ':%y<CR>',
+  { silent = true, desc = 'Copy entire file to clipboard' }
+)
+
+vim.keymap.set({ 'n', 'v' }, 'j', 'k', { noremap = true, silent = true })
+vim.keymap.set({ 'n', 'v' }, 'k', 'j', { noremap = true, silent = true })
