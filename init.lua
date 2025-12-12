@@ -17,6 +17,8 @@ vim.opt.relativenumber = true
 vim.opt.mouse = "a"
 vim.o.completeopt = "menuone,noinsert,noselect"
 
+require("lsp")
+
 require('packer').startup(function(use)
     use 'wbthomason/packer.nvim'
     use 'nvim-tree/nvim-tree.lua'
@@ -73,7 +75,6 @@ require('nvim-treesitter.configs').setup {
 
 vim.g.mapleader = ' '
 
--- keymaps
 vim.keymap.set('n', '<C-n>', ':NvimTreeToggle<CR>', { silent = true })
 
 vim.keymap.set('n', '<leader>ff', ':Telescope find_files<CR>', { silent = true })
@@ -90,3 +91,5 @@ vim.keymap.set(
 
 vim.keymap.set({ 'n', 'v' }, 'j', 'k', { noremap = true, silent = true })
 vim.keymap.set({ 'n', 'v' }, 'k', 'j', { noremap = true, silent = true })
+vim.opt.number = true
+vim.opt.relativenumber = false
