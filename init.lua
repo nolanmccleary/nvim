@@ -23,6 +23,7 @@ require('packer').startup(function(use)
     use 'wbthomason/packer.nvim'
     use 'nvim-tree/nvim-tree.lua'
     use 'nvim-tree/nvim-web-devicons'
+    use { "ellisonleao/glow.nvim", branch = "main" }
 
     use {
             'nvim-treesitter/nvim-treesitter',
@@ -43,6 +44,7 @@ require('packer').startup(function(use)
     use 'saadparwaiz1/cmp_luasnip'
 end)
 
+require("glow").setup()
 
 require('nvim-web-devicons').setup {
     default = true,  -- use default icons when no match
@@ -76,6 +78,7 @@ require('nvim-treesitter.configs').setup {
 vim.g.mapleader = ' '
 
 vim.keymap.set('n', '<C-n>', ':NvimTreeToggle<CR>', { silent = true })
+vim.keymap.set('n', '<leader>mp', ':Glow<CR>', { desc = "Markdown Preview" })
 
 vim.keymap.set('n', '<leader>ff', ':Telescope find_files<CR>', { silent = true })
 vim.keymap.set('n', '<leader>fg', ':Telescope live_grep<CR>', { silent = true })
@@ -91,5 +94,7 @@ vim.keymap.set(
 
 vim.keymap.set({ 'n', 'v' }, 'j', 'k', { noremap = true, silent = true })
 vim.keymap.set({ 'n', 'v' }, 'k', 'j', { noremap = true, silent = true })
+
 vim.opt.number = true
 vim.opt.relativenumber = false
+
