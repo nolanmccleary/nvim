@@ -1,100 +1,114 @@
---  git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+-- git clone https://github.com/folke/lazy.nvim.git ~/.local/share/nvim/lazy/lazy.nvim
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git", "clone", "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    lazypath,
+  })
+end
+vim.opt.rtp:prepend(lazypath)
 
-
-vim.opt.expandtab = true   
-vim.opt.shiftwidth = 4     
-vim.opt.tabstop = 4        
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 4
+vim.opt.tabstop = 4
 vim.opt.smartindent = true
 vim.opt.clipboard = "unnamedplus"
-vim.opt.ignorecase = true  
-vim.opt.smartcase = true   
--- vim.opt.termguicolors = true
-vim.opt.signcolumn = "yes" 
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
+vim.opt.signcolumn = "yes"
 vim.opt.swapfile = false
-vim.opt.undofile = true   
-vim.opt.number = true
-vim.opt.relativenumber = true
-vim.opt.mouse = "a"
-vim.o.completeopt = "menuone,noinsert,noselect"
-
-require("lsp")
-
-require('packer').startup(function(use)
-    use 'wbthomason/packer.nvim'
-    use 'nvim-tree/nvim-tree.lua'
-    use 'nvim-tree/nvim-web-devicons'
-    use { "ellisonleao/glow.nvim", branch = "main" }
-
-    use {
-            'nvim-treesitter/nvim-treesitter',
-            run = ':TSUpdate',
-        }
-  
-    use {
-        'nvim-telescope/telescope.nvim',
-        requires = { 'nvim-lua/plenary.nvim' },
-    }
-
-    use 'neovim/nvim-lspconfig'
-    use 'hrsh7th/nvim-cmp'
-    use 'hrsh7th/cmp-nvim-lsp'
-    use 'hrsh7th/cmp-buffer'
-    use 'hrsh7th/cmp-path'
-    use 'L3MON4D3/LuaSnip'
-    use 'saadparwaiz1/cmp_luasnip'
-end)
-
-require("glow").setup()
-
-require('nvim-web-devicons').setup {
-    default = true,  -- use default icons when no match
-}
-
-require('nvim-tree').setup {
-    renderer = {
-        icons = {
-            show = {
-                file = true,
-                folder = true,
-                folder_arrow = true,
-                git = true,   -- git status icons
-            },
-        },
-    },
-    git = {
-        enable = true,
-        ignore = false,
-    },
-}
-
-require('nvim-treesitter.configs').setup {
-    ensure_installed = { "c", "lua", "vim", "vimdoc", "json", "python" }, -- pick what you use
-    highlight = {
-        enable = true,
-    },
-}
-
-
-vim.g.mapleader = ' '
-
-vim.keymap.set('n', '<C-n>', ':NvimTreeToggle<CR>', { silent = true })
-vim.keymap.set('n', '<leader>mp', ':Glow<CR>', { desc = "Markdown Preview" })
-
-vim.keymap.set('n', '<leader>ff', ':Telescope find_files<CR>', { silent = true })
-vim.keymap.set('n', '<leader>fg', ':Telescope live_grep<CR>', { silent = true })
-vim.keymap.set('n', '<leader>fb', ':Telescope buffers<CR>', { silent = true })
-vim.keymap.set('n', '<leader>fh', ':Telescope help_tags<CR>', { silent = true })
-
-vim.keymap.set(
-  'n',
-  '<leader>y',
-  ':%y<CR>',
-  { silent = true, desc = 'Copy entire file to clipboard' }
-)
-
-vim.keymap.set({ 'n', 'v' }, 'j', 'k', { noremap = true, silent = true })
-vim.keymap.set({ 'n', 'v' }, 'k', 'j', { noremap = true, silent = true })
-
+vim.opt.undofile = true
 vim.opt.number = true
 vim.opt.relativenumber = false
+vim.opt.mouse = "a"
+vim.o.completeopt = "menuone,noinsert,noselect"
+vim.g.mapleader = " "
+
+-- ===== plugins =====
+require("lazy").setup({
+  -- Install missing plugins automatically on startup
+  install = { missing = true },
+
+  spec = {
+    {
+      "nvim-tree/nvim-tree.lua",
+      dependencies = { "nvim-tree/nvim-web-devicons" },
+      keys = {
+        { "<C-n>", "<cmd>NvimTreeToggle<cr>", silent = true },
+      },
+      config = function()
+        pcall(function()
+          require("nvim-web-devicons").setup({ default = true })
+        end)
+        pcall(function()
+          require("nvim-tree").setup({
+            renderer = {
+              icons = {
+                show = { file = true, folder = true, folder_arrow = true, git = true },
+              },
+            },
+            git = { enable = true, ignore = false },
+          })
+        end)
+      end,
+    },
+
+    {
+      "ellisonleao/glow.nvim",
+      cmd = "Glow",
+      keys = {
+        { "<leader>mp", "<cmd>Glow<cr>", desc = "Markdown Preview" },
+      },
+      config = function()
+        pcall(function() require("glow").setup() end)
+      end,
+    },
+
+    {
+      "nvim-treesitter/nvim-treesitter",
+      build = ":TSUpdate",
+      config = function()
+        local ok, configs = pcall(require, "nvim-treesitter.configs")
+        if not ok then return end
+        configs.setup({
+          ensure_installed = { "c", "lua", "vim", "vimdoc", "json", "python" },
+          highlight = { enable = true },
+        })
+      end,
+    },
+
+    {
+      "nvim-telescope/telescope.nvim",
+      dependencies = { "nvim-lua/plenary.nvim" },
+      cmd = "Telescope",
+      keys = {
+        { "<leader>ff", "<cmd>Telescope find_files<cr>", silent = true },
+        { "<leader>fg", "<cmd>Telescope live_grep<cr>", silent = true },
+        { "<leader>fb", "<cmd>Telescope buffers<cr>", silent = true },
+        { "<leader>fh", "<cmd>Telescope help_tags<cr>", silent = true },
+      },
+    },
+
+    {
+      "neovim/nvim-lspconfig",
+      event = { "BufReadPre", "BufNewFile" },
+      dependencies = {
+        "hrsh7th/nvim-cmp",
+        "hrsh7th/cmp-nvim-lsp",
+        "hrsh7th/cmp-buffer",
+        "hrsh7th/cmp-path",
+        "L3MON4D3/LuaSnip",
+        "saadparwaiz1/cmp_luasnip",
+      },
+      config = function()
+        pcall(require, "lsp")
+      end,
+    },
+  },
+})
+
+vim.keymap.set("n", "<leader>y", ":%y<CR>", { silent = true, desc = "Copy entire file to clipboard" })
+vim.keymap.set({ "n", "v" }, "j", "k", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v" }, "k", "j", { noremap = true, silent = true })
 
