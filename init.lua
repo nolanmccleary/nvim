@@ -33,6 +33,7 @@ require("lazy").setup({
   spec = {
     {
       "nvim-tree/nvim-tree.lua",
+      lazy=false,
       dependencies = { "nvim-tree/nvim-web-devicons" },
       keys = {
         { "<C-n>", "<cmd>NvimTreeToggle<cr>", silent = true },
@@ -67,19 +68,22 @@ require("lazy").setup({
 
     {
       "nvim-treesitter/nvim-treesitter",
+      lazy=false,
       build = ":TSUpdate",
       config = function()
         local ok, configs = pcall(require, "nvim-treesitter.configs")
         if not ok then return end
         configs.setup({
-          ensure_installed = { "c", "lua", "vim", "vimdoc", "json", "python" },
+          ensure_installed = { "c", "cpp", "verilog", "systemverilog", "tcl", "lua", "vim", "vimdoc", "json", "python", "make", "cmake" },
           highlight = { enable = true },
+	  auto_install = true,
         })
       end,
     },
 
     {
       "nvim-telescope/telescope.nvim",
+      lazy=false,
       dependencies = { "nvim-lua/plenary.nvim" },
       cmd = "Telescope",
       keys = {
@@ -92,6 +96,7 @@ require("lazy").setup({
 
     {
       "neovim/nvim-lspconfig",
+      lazy=false,
       event = { "BufReadPre", "BufNewFile" },
       dependencies = {
         "hrsh7th/nvim-cmp",

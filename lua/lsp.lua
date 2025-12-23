@@ -29,7 +29,18 @@ vim.lsp.config('*', {
 })
 
 
+vim.lsp.config("slang-server", {
+  cmd = { "/home/nolan/devtools/slang-server/build/bin/slang-server" },
+  root_markers = { ".git", ".slang" },
+  filetypes = {
+    "systemverilog",
+    "verilog",
+  },
+})
+
+vim.lsp.enable("slang-server")
+
+
 vim.lsp.enable('lua_ls')
 vim.lsp.enable('pyright')
 vim.lsp.enable('clangd')
-vim.lsp.enable('svls')
