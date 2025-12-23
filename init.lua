@@ -70,6 +70,7 @@ require("lazy").setup({
       "nvim-treesitter/nvim-treesitter",
       lazy=false,
       build = ":TSUpdate",
+      highlight = { enable = true },
     },
 
     {
@@ -101,6 +102,11 @@ require("lazy").setup({
         pcall(require, "lsp")
       end,
     },
+    {
+        "folke/tokyonight.nvim",
+        lazy = false,
+        priority = 1000,
+    },
   },
 })
 
@@ -108,13 +114,13 @@ require'nvim-treesitter'.setup {
     install_dir = vim.fn.stdpath('data') .. '/site'
 }
 
-require'nvim-treesitter'.install { 'c', 'python', 'lua', 'verilog'}
+require'nvim-treesitter'.install { 'c', 'cpp', 'python', 'lua', 'verilog', 'systemverilog', 'make', 'cmake'}
 
 vim.keymap.set("n", "<leader>y", ":%y<CR>", { silent = true, desc = "Copy entire file to clipboard" })
 vim.keymap.set({ "n", "v" }, "j", "k", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v" }, "k", "j", { noremap = true, silent = true })
 
 vim.api.nvim_create_autocmd('FileType', {
-    pattern = { '<filetype>' },
+    pattern = { 'c', 'cpp', 'python', 'lua', 'verilog', 'systemverilog', 'make', 'cmake' },
     callback = function() vim.treesitter.start() end,
 })
