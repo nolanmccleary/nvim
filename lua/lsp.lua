@@ -39,8 +39,7 @@ vim.lsp.config("slang-server", {
 })
 
 vim.lsp.enable("slang-server")
-
-
+vim.lsp.enable('bashls')
 vim.lsp.enable('lua_ls')
 vim.lsp.enable('pyright')
 vim.lsp.enable('clangd')

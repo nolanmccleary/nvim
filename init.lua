@@ -102,25 +102,68 @@ require("lazy").setup({
         pcall(require, "lsp")
       end,
     },
+    --{
+    --    "rebelot/kanagawa.nvim",
+    --    lazy = false,
+    --    priority = 1000,
+    --},
     {
-        "folke/tokyonight.nvim",
+        "vague-theme/vague.nvim",
         lazy = false,
         priority = 1000,
     },
   },
 })
 
+
 require'nvim-treesitter'.setup {
     install_dir = vim.fn.stdpath('data') .. '/site'
 }
 
+
 require'nvim-treesitter'.install { 'c', 'cpp', 'python', 'lua', 'verilog', 'systemverilog', 'make', 'cmake'}
+
 
 vim.keymap.set("n", "<leader>y", ":%y<CR>", { silent = true, desc = "Copy entire file to clipboard" })
 vim.keymap.set({ "n", "v" }, "j", "k", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v" }, "k", "j", { noremap = true, silent = true })
 
+
+-- vim.api.nvim_create_autocmd('FileType', {
+--     pattern = { 'c', 'cpp', 'python', 'lua', 'verilog', 'systemverilog', 'make', 'cmake' },
+--     callback = function() vim.treesitter.start() end,
+-- })
+-- 
+
+--Use Zathura to open PDF files
 vim.api.nvim_create_autocmd('FileType', {
-    pattern = { 'c', 'cpp', 'python', 'lua', 'verilog', 'systemverilog', 'make', 'cmake' },
-    callback = function() vim.treesitter.start() end,
+    pattern = 'pdf',
+    callback = function (args)
+        local file = vim.api.nvim_buf_get_name(args.buf)
+        vim.fn.jobstart({ 'zathura', file}, { detach = true })
+        vim.api.nvim_buf_delete(args.buf, { force = true })
+    end,
 })
+
+
+-- Use rga so that telescope can search inside PDF files too
+do
+  local ok, telescope = pcall(require, "telescope")
+  if ok then
+    local vimgrep = { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case" }
+
+    if vim.fn.executable("rga") == 1 then
+      vimgrep = { "rga", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case" }
+    end
+
+    telescope.setup({
+      defaults = {
+        vimgrep_arguments = vimgrep,
+      },
+    })
+  end
+end
+
+
+--require("kanagawa").setup({ transparent = true })
+vim.cmd.colorscheme("vague")
