@@ -30,7 +30,7 @@ vim.lsp.config('*', {
 
 
 vim.lsp.config("slang-server", {
-  cmd = { "/home/nolan/devtools/slang-server/build/bin/slang-server" },
+  cmd = { "/home/nolan/.local/share/nvim/slang-server/build/bin/slang-server" },
   root_markers = { ".git", ".slang" },
   filetypes = {
     "systemverilog",
