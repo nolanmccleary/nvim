@@ -7,8 +7,9 @@ if not vim.loop.fs_stat(lazypath) then
     lazypath,
   })
 end
-vim.opt.rtp:prepend(lazypath)
 
+vim.opt.rtp:prepend(lazypath)
+vim.opt.termguicolors = true
 vim.opt.expandtab = true
 vim.opt.shiftwidth = 4
 vim.opt.tabstop = 4
@@ -127,13 +128,13 @@ require'nvim-treesitter'.install { 'c', 'cpp', 'python', 'lua', 'verilog', 'syst
 vim.keymap.set("n", "<leader>y", ":%y<CR>", { silent = true, desc = "Copy entire file to clipboard" })
 vim.keymap.set({ "n", "v" }, "j", "k", { noremap = true, silent = true })
 vim.keymap.set({ "n", "v" }, "k", "j", { noremap = true, silent = true })
+vim.keymap.set("n", "[b", ":bprevious<CR>", { silent = true })
+vim.keymap.set("n", "]b", ":bnext<CR>", { silent = true })
+vim.keymap.set("n", "<leader>bd", ":bdelete<CR>", { silent = true })
+vim.keymap.set("n", "<leader>vst", ":vsplit | term<CR>", {silent = true })
+vim.keymap.set("n", "<leader>st", ":split | term<CR>", {silent = true })
+vim.keymap.set("n", "<leader>cwd", ":lua require('nvim-tree.api').tree.change_root(vim.fn.getcwd())<CR>", {silent = true}) 
 
-
--- vim.api.nvim_create_autocmd('FileType', {
---     pattern = { 'c', 'cpp', 'python', 'lua', 'verilog', 'systemverilog', 'make', 'cmake' },
---     callback = function() vim.treesitter.start() end,
--- })
--- 
 
 --Use Zathura to open PDF files
 vim.api.nvim_create_autocmd('FileType', {
