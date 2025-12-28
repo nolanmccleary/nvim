@@ -71,7 +71,6 @@ require("lazy").setup({
       "nvim-treesitter/nvim-treesitter",
       lazy=false,
       build = ":TSUpdate",
-      highlight = { enable = true },
     },
 
     {
@@ -134,6 +133,75 @@ vim.keymap.set("n", "<leader>bd", ":bdelete<CR>", { silent = true })
 vim.keymap.set("n", "<leader>vst", ":vsplit | term<CR>", {silent = true })
 vim.keymap.set("n", "<leader>st", ":split | term<CR>", {silent = true })
 vim.keymap.set("n", "<leader>cwd", ":lua require('nvim-tree.api').tree.change_root(vim.fn.getcwd())<CR>", {silent = true}) 
+vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], { desc = "Exit terminal mode" })
+
+
+
+local history = {} -- Structure: { [win_id] = { index = 1, list = { buf1, buf2 } } }
+
+local function update_history()
+    local win_id = vim.api.nvim_get_current_win()
+    local buf_id = vim.api.nvim_get_current_buf()
+
+    if vim.bo.buftype ~= "" or vim.bo.filetype == "NvimTree" then return end
+
+    if not history[win_id] then
+        history[win_id] = { index = 1, list = { buf_id } }
+        return
+    end
+
+    local win_hist = history[win_id]
+    
+    if win_hist.list[win_hist.index] == buf_id then return end
+
+    while #win_hist.list > win_hist.index do
+        table.remove(win_hist.list)
+    end
+
+    table.insert(win_hist.list, buf_id)
+    win_hist.index = #win_hist.list
+end
+
+local function cleanup_history(args)
+    local deleted_buf = args.buf
+    for win_id, win_hist in pairs(history) do
+        for i = #win_hist.list, 1, -1 do
+            if win_hist.list[i] == deleted_buf then
+                table.remove(win_hist.list, i)
+                if win_hist.index >= i and win_hist.index > 1 then
+                    win_hist.index = win_hist.index - 1
+                end
+            end
+        end
+    end
+end
+
+vim.api.nvim_create_autocmd("BufEnter", { callback = update_history })
+vim.api.nvim_create_autocmd("BufDelete", { callback = cleanup_history })
+
+local function navigate_local_history(delta)
+    local win_id = vim.api.nvim_get_current_win()
+    local win_hist = history[win_id]
+
+    if not win_hist or #win_hist.list == 0 then 
+        print("No local history for this window")
+        return 
+    end
+
+    local new_index = win_hist.index + delta
+    if new_index >= 1 and new_index <= #win_hist.list then
+        win_hist.index = new_index
+        local target_buf = win_hist.list[new_index]
+        if vim.api.nvim_buf_is_valid(target_buf) then
+            vim.api.nvim_set_current_buf(target_buf)
+        end
+    else
+        print(delta > 0 and "At newest jump" or "At oldest jump")
+    end
+end
+
+vim.keymap.set("n", "[c", function() navigate_local_history(-1) end, { desc = "Local Back" })
+vim.keymap.set("n", "]c", function() navigate_local_history(1) end, { desc = "Local Forward" })
 
 
 --Use Zathura to open PDF files
