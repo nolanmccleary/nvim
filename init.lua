@@ -40,11 +40,26 @@ require("lazy").setup({
         { "<C-n>", "<cmd>NvimTreeToggle<cr>", silent = true },
       },
       config = function()
-        pcall(function()
-          require("nvim-web-devicons").setup({ default = true })
-        end)
-        pcall(function()
+        local function ovrd_on_attach(bufnr)
+            local api = require("nvim-tree.api")
+            local function opts(desc)
+                return {desc = "nvim-tree: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+            end
+            api.config.mappings.default_on_attach(bufnr)
+
+            vim.keymap.set('n', 'vl', function()
+                vim.opt.splitright = false
+                api.node.open.vertical()
+            end, opts('Vertical Split Left'))
+
+            vim.keymap.set('n', 'vr', function()
+                vim.opt.splitright = true
+                api.node.open.vertical()
+            end, opts('Vertical Split Right'))
+        end
+
           require("nvim-tree").setup({
+            on_attach = ovrd_on_attach,
             renderer = {
               icons = {
                 show = { file = true, folder = true, folder_arrow = true, git = true },
@@ -52,7 +67,6 @@ require("lazy").setup({
             },
             git = { enable = true, ignore = false },
           })
-        end)
       end,
     },
 
