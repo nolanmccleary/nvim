@@ -25,6 +25,7 @@ vim.opt.relativenumber = false
 vim.opt.mouse = "a"
 vim.o.completeopt = "menuone,noinsert,noselect"
 vim.g.mapleader = " "
+vim.opt.whichwrap:append("<,>,h,l,[,]")
 
 -- ===== plugins =====
 require("lazy").setup({
@@ -159,8 +160,8 @@ require'nvim-treesitter'.install { 'c', 'cpp', 'python', 'lua', 'verilog', 'syst
 
 
 vim.keymap.set("n", "<leader>y", ":%y<CR>", { silent = true, desc = "Copy entire file to clipboard" })
-vim.keymap.set({ "n", "v" }, "j", "k", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v" }, "k", "j", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v" }, "h", "k", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v" }, "k", "h", { noremap = true, silent = true })
 vim.keymap.set("n", "[b", ":bprevious<CR>", { silent = true })
 vim.keymap.set("n", "]b", ":bnext<CR>", { silent = true })
 vim.keymap.set("n", "<leader>bd", ":bdelete<CR>", { silent = true })
@@ -168,7 +169,6 @@ vim.keymap.set("n", "<leader>vst", ":vsplit | term<CR>", {silent = true })
 vim.keymap.set("n", "<leader>st", ":split | term<CR>", {silent = true })
 vim.keymap.set("n", "<leader>cwd", ":lua require('nvim-tree.api').tree.change_root(vim.fn.getcwd())<CR>", {silent = true}) 
 vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], { desc = "Exit terminal mode" })
-
 
 
 local history = {} -- Structure: { [win_id] = { index = 1, list = { buf1, buf2 } } }
