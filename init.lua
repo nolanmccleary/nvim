@@ -116,6 +116,26 @@ require("lazy").setup({
         pcall(require, "lsp")
       end,
     },
+
+    
+    {
+        "lewis6991/gitsigns.nvim",
+        lazy = false,
+        config = function()
+            require("gitsigns").setup({
+                current_line_blame = false,
+            })
+
+            vim.keymap.set("n", "<leader>gp", function() require("gitsigns").preview_hunk() end, { desc = "Git preview hunk" })
+            vim.keymap.set("n", "<leader>gb", function() require("gitsigns").toggle_current_line_blame() end, { desc = "Git blame toggle" })
+            vim.keymap.set("n", "<leader>gd", function() require("gitsigns").diffthis() end, { desc = "Git diff this" })
+            vim.keymap.set("n", "]h", function() require("gitsigns").next_hunk() end, { desc = "Next git hunk" })
+            vim.keymap.set("n", "[h", function() require("gitsigns").prev_hunk() end, { desc = "Prev git hunk" })
+        end,
+    },
+
+
+
     --{
     --    "rebelot/kanagawa.nvim",
     --    lazy = false,
@@ -216,6 +236,36 @@ end
 
 vim.keymap.set("n", "[c", function() navigate_local_history(-1) end, { desc = "Local Back" })
 vim.keymap.set("n", "]c", function() navigate_local_history(1) end, { desc = "Local Forward" })
+
+
+
+local function swap_with(direction)
+  local curwin = vim.api.nvim_get_current_win()
+  local curbuf = vim.api.nvim_win_get_buf(curwin)
+
+  -- find neighbor window in that direction
+  local neighbor = vim.fn.winnr(direction) -- 'h' left, 'l' right
+  if neighbor == 0 then
+    print("No window in that direction")
+    return
+  end
+
+  local neighwin = vim.fn.win_getid(neighbor)
+  if neighwin == 0 or neighwin == curwin then
+    print("No window in that direction")
+    return
+  end
+
+  local neighbuf = vim.api.nvim_win_get_buf(neighwin)
+
+  -- swap buffers
+  vim.api.nvim_win_set_buf(curwin, neighbuf)
+  vim.api.nvim_win_set_buf(neighwin, curbuf)
+end
+
+vim.keymap.set("n", "[s", function() swap_with("h") end, { desc = "Swap with left window" })
+vim.keymap.set("n", "]s", function() swap_with("l") end, { desc = "Swap with right window" })
+
 
 
 --Use Zathura to open PDF files
