@@ -169,7 +169,11 @@ vim.keymap.set("n", "<leader>vst", ":vsplit | term<CR>", {silent = true })
 vim.keymap.set("n", "<leader>st", ":split | term<CR>", {silent = true })
 vim.keymap.set("n", "<leader>cwd", ":lua require('nvim-tree.api').tree.change_root(vim.fn.getcwd())<CR>", {silent = true}) 
 vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], { desc = "Exit terminal mode" })
-
+vim.keymap.set({ "n", "v" }, "d", '"pd', { noremap = true })
+vim.keymap.set({ "n", "v" }, "D", '"pD', { noremap = true })
+vim.keymap.set({ "n", "v" }, "c", '"pc', { noremap = true })
+vim.keymap.set({ "n", "v" }, "C", '"pC', { noremap = true })
+vim.keymap.set({ "n", "v" }, "<leader>p", '"pp', { noremap = true, desc = "Paste from deletion register" })
 
 local history = {} -- Structure: { [win_id] = { index = 1, list = { buf1, buf2 } } }
 
@@ -394,6 +398,30 @@ vim.api.nvim_create_autocmd("BufReadCmd", {
 
     pcall(vim.api.nvim_buf_delete, args.buf, { force = true })
   end,
+})
+
+vim.api.nvim_create_user_command('Gd', function(opts)
+    local target_file = opts.args
+    if vim.fn.filereadable(target_file) == 0 then
+        vim.notify("File not found: " .. target_file, vim.log.levels.ERROR)
+        return
+    end
+
+    vim.cmd("edit " .. target_file)
+
+    local gs = require('gitsigns')
+    local function try_diff()
+        local bufnr = vim.api.nvim_get_current_buf()
+        gs.attach(bufnr)
+        vim.defer_fn(function()
+            gs.diffthis()
+        end, 100)
+    end
+
+    try_diff()
+end, {
+    nargs = 1,
+    complete = 'file',
 })
 
 
