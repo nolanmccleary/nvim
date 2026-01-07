@@ -160,8 +160,8 @@ require'nvim-treesitter'.install { 'c', 'cpp', 'python', 'lua', 'verilog', 'syst
 
 
 vim.keymap.set("n", "<leader>y", ":%y<CR>", { silent = true, desc = "Copy entire file to clipboard" })
-vim.keymap.set({ "n", "v" }, "h", "k", { noremap = true, silent = true })
-vim.keymap.set({ "n", "v" }, "k", "h", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v" }, "j", "k", { noremap = true, silent = true })
+vim.keymap.set({ "n", "v" }, "k", "j", { noremap = true, silent = true })
 vim.keymap.set("n", "[b", ":bprevious<CR>", { silent = true })
 vim.keymap.set("n", "]b", ":bnext<CR>", { silent = true })
 vim.keymap.set("n", "<leader>bd", ":bdelete<CR>", { silent = true })
@@ -318,23 +318,56 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 
 
--- Use rga so that telescope can search inside PDF files too
 do
   local ok, telescope = pcall(require, "telescope")
   if ok then
-    local vimgrep = { "rg", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case" }
+    local vimgrep = { 
+      "rg", 
+      "--color=never", 
+      "--no-heading", 
+      "--with-filename", 
+      "--line-number", 
+      "--column", 
+      "--smart-case",
+      "--no-ignore", 
+      "--hidden"     
+    }
 
     if vim.fn.executable("rga") == 1 then
-      vimgrep = { "rga", "--color=never", "--no-heading", "--with-filename", "--line-number", "--column", "--smart-case" }
+      vimgrep = { 
+        "rga", 
+        "--color=never", 
+        "--no-heading", 
+        "--with-filename", 
+        "--line-number", 
+        "--column", 
+        "--smart-case",
+        "--no-ignore", 
+        "--hidden"
+      }
     end
 
     telescope.setup({
       defaults = {
         vimgrep_arguments = vimgrep,
       },
+      pickers = {
+        find_files = {
+          no_ignore = true,
+          hidden = true,
+        },
+        live_grep = {
+           additional_args = function(opts)
+                return {"--no-ignore", "--hidden"}
+           end
+        }
+      }
     })
   end
 end
+
+
+
 
 -- Use GTKWave for waveform dumps
 vim.api.nvim_create_autocmd("BufReadCmd", {
