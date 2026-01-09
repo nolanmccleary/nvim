@@ -26,6 +26,7 @@ vim.opt.mouse = "a"
 vim.o.completeopt = "menuone,noinsert,noselect"
 vim.g.mapleader = " "
 vim.opt.whichwrap:append("<,>,h,l,[,]")
+vim.opt.smoothscroll = true
 
 -- ===== plugins =====
 require("lazy").setup({
@@ -323,6 +324,17 @@ vim.api.nvim_create_autocmd('FileType', {
         vim.api.nvim_buf_delete(args.buf, { force = true })
     end,
 })
+
+
+vim.api.nvim_create_autocmd("FileType", {
+  callback = function()
+    local lang = vim.treesitter.language.get_lang(vim.bo.filetype)
+    if lang then
+      pcall(vim.treesitter.start)
+    end
+  end,
+})
+
 
 
 do
