@@ -49,15 +49,16 @@ require("lazy").setup({
             end
             api.config.mappings.default_on_attach(bufnr)
 
-            vim.keymap.set('n', 'vl', function()
+            vim.keymap.set('n', '<leader>l', function()
                 vim.opt.splitright = false
                 api.node.open.vertical()
             end, opts('Vertical Split Left'))
 
-            vim.keymap.set('n', 'vr', function()
+            vim.keymap.set('n', '<leader>r', function()
                 vim.opt.splitright = true
                 api.node.open.vertical()
             end, opts('Vertical Split Right'))
+
         end
 
           require("nvim-tree").setup({
@@ -132,12 +133,15 @@ require("lazy").setup({
 
             vim.keymap.set("n", "<leader>gp", function() require("gitsigns").preview_hunk() end, { desc = "Git preview hunk" })
             vim.keymap.set("n", "<leader>gb", function() require("gitsigns").toggle_current_line_blame() end, { desc = "Git blame toggle" })
-            vim.keymap.set("n", "<leader>gd", function() require("gitsigns").diffthis() end, { desc = "Git diff this" })
             vim.keymap.set("n", "]h", function() require("gitsigns").next_hunk() end, { desc = "Next git hunk" })
             vim.keymap.set("n", "[h", function() require("gitsigns").prev_hunk() end, { desc = "Prev git hunk" })
-        end,
-    },
+            vim.keymap.set("n", "<leader>gd", function()
+                require("gitsigns").diffthis() 
+                --vim.cmd("wincmd h")
+            end, { desc = "Git diff this" })
 
+    	end
+    },  
     --{
     --    "rebelot/kanagawa.nvim",
     --    lazy = false,
@@ -178,6 +182,48 @@ vim.keymap.set({ "n", "v" }, "D", '"pD', { noremap = true })
 vim.keymap.set({ "n", "v" }, "c", '"pc', { noremap = true })
 vim.keymap.set({ "n", "v" }, "C", '"pC', { noremap = true })
 vim.keymap.set({ "n", "v" }, "<leader>p", '"pp', { noremap = true, desc = "Paste from deletion register" })
+vim.keymap.set("v", "<leader>r", ":!tac<CR>gv", { desc = "Mirror Lines" })
+
+vim.keymap.set("n", "[w", function()
+    local cur_win = vim.api.nvim_get_current_win()
+    vim.cmd("wincmd h")
+    if cur_win == vim.api.nvim_get_current_win() then
+        vim.cmd("wincmd b")
+    end
+end, { desc = "Go to left window (wrap)" })
+
+vim.keymap.set("n", "]w", function()
+    local cur_win = vim.api.nvim_get_current_win()
+    vim.cmd("wincmd l")
+    if cur_win == vim.api.nvim_get_current_win() then
+        vim.cmd("wincmd t")
+    end
+end, { desc = "Go to right window (wrap)" })
+
+local function manual_indent(dir)
+    local start_line = vim.fn.line("v")
+    local end_line = vim.fn.line(".")
+    
+    if start_line > end_line then
+        start_line, end_line = end_line, start_line
+    end
+
+    local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
+    
+    for i, line in ipairs(lines) do
+        if dir == ">" then
+            lines[i] = "    " .. line
+        else
+            lines[i] = line:gsub("^    ", "")
+        end
+    end
+    vim.api.nvim_buf_set_lines(0, start_line - 1, end_line, false, lines)
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("gv", true, false, true), "n", false)
+end
+
+-- Bind to > and < in visual mode
+vim.keymap.set("v", ">", function() manual_indent(">") end, { noremap = true, silent = true })
+vim.keymap.set("v", "<", function() manual_indent("<") end, { noremap = true, silent = true })
 
 local history = {} -- Structure: { [win_id] = { index = 1, list = { buf1, buf2 } } }
 
@@ -335,7 +381,13 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
-
+vim.api.nvim_create_autocmd("WinLeave", {
+    callback = function()
+        if vim.api.nvim_get_mode().mode == "i" then
+            vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+        end
+    end,
+})
 
 do
   local ok, telescope = pcall(require, "telescope")
