@@ -20,14 +20,15 @@ vim.opt.smartcase = true
 vim.opt.signcolumn = "yes"
 vim.opt.swapfile = false
 vim.opt.undofile = true
-vim.opt.number = true
-vim.opt.relativenumber = false
+--vim.opt.number = true
+vim.opt.relativenumber = true
 vim.opt.mouse = "a"
 vim.o.completeopt = "menuone,noinsert,noselect"
 vim.g.mapleader = " "
 vim.opt.whichwrap:append("<,>,h,l,[,]")
 vim.opt.smoothscroll = true
-
+vim.opt.smarttab = true
+vim.opt.shiftround = true
 -- ===== plugins =====
 require("lazy").setup({
   -- Install missing plugins automatically on startup
@@ -49,12 +50,12 @@ require("lazy").setup({
             end
             api.config.mappings.default_on_attach(bufnr)
 
-            vim.keymap.set('n', '<leader>l', function()
+            vim.keymap.set('n', 'vl', function()
                 vim.opt.splitright = false
                 api.node.open.vertical()
             end, opts('Vertical Split Left'))
 
-            vim.keymap.set('n', '<leader>r', function()
+            vim.keymap.set('n', 'vr', function()
                 vim.opt.splitright = true
                 api.node.open.vertical()
             end, opts('Vertical Split Right'))
@@ -133,12 +134,65 @@ require("lazy").setup({
 
             vim.keymap.set("n", "<leader>gp", function() require("gitsigns").preview_hunk() end, { desc = "Git preview hunk" })
             vim.keymap.set("n", "<leader>gb", function() require("gitsigns").toggle_current_line_blame() end, { desc = "Git blame toggle" })
-            vim.keymap.set("n", "]h", function() require("gitsigns").next_hunk() end, { desc = "Next git hunk" })
-            vim.keymap.set("n", "[h", function() require("gitsigns").prev_hunk() end, { desc = "Prev git hunk" })
+            vim.keymap.set("n", "<leader>gr", function() require("gitsigns").reset_hunk() end, {desc = "Reset hunk" }) 
             vim.keymap.set("n", "<leader>gd", function()
                 require("gitsigns").diffthis() 
-                --vim.cmd("wincmd h")
+                vim.cmd("wincmd h")
             end, { desc = "Git diff this" })
+            local function get_hunk_status_diff()
+                vim.schedule(function()
+                    local gs = package.loaded.gitsigns
+                    if not gs then return end
+
+                    -- Get current window and current line
+                    local cur_win = vim.api.nvim_get_current_win()
+                    local line = vim.api.nvim_win_get_cursor(cur_win)[1]
+                    
+                    -- Find the buffer in the 'other' window of the diff
+                    -- In a :Gd diff, one window is the file, one is the index.
+                    local other_win = (cur_win == vim.fn.win_getid(vim.fn.winnr('h'))) and vim.fn.win_getid(vim.fn.winnr('l')) or vim.fn.win_getid(vim.fn.winnr('h'))
+                    local target_buf = vim.api.nvim_win_get_buf(other_win)
+                    
+                    -- If the 'other' window isn't the real file, check the current one
+                    if vim.bo[target_buf].buftype ~= "" then
+                        target_buf = vim.api.nvim_win_get_buf(cur_win)
+                    end
+
+                    local hunks = gs.get_hunks(target_buf)
+                    if not hunks or #hunks == 0 then return end
+
+                    for i, hunk in ipairs(hunks) do
+                        -- SystemVerilog/C blocks can be 1 line or many; math.max handles single-line hunks
+                        local start = hunk.added.start
+                        local finish = hunk.added.start + math.max(0, hunk.added.count - 1)
+                        
+                        if line >= start and line <= finish then
+                            -- Clear the previous message and print new status
+                            vim.api.nvim_command('redraw')
+                            print(string.format("Hunk %d of %d", i, #hunks))
+                            return
+                        end
+                    end
+                end)
+            end
+
+            vim.keymap.set("n", "]h", function()
+                if vim.wo.diff then
+                    vim.cmd("normal! ]c")
+                    get_hunk_status_diff()
+                else
+                    require("gitsigns").nav_hunk("next")
+                end
+            end)
+
+            vim.keymap.set("n", "[h", function()
+                if vim.wo.diff then
+                    vim.cmd("normal! [c")
+                    get_hunk_status_diff()
+                else
+                    require("gitsigns").nav_hunk("prev")
+                end
+            end)
 
     	end
     },  
@@ -200,30 +254,6 @@ vim.keymap.set("n", "]w", function()
     end
 end, { desc = "Go to right window (wrap)" })
 
-local function manual_indent(dir)
-    local start_line = vim.fn.line("v")
-    local end_line = vim.fn.line(".")
-    
-    if start_line > end_line then
-        start_line, end_line = end_line, start_line
-    end
-
-    local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
-    
-    for i, line in ipairs(lines) do
-        if dir == ">" then
-            lines[i] = "    " .. line
-        else
-            lines[i] = line:gsub("^    ", "")
-        end
-    end
-    vim.api.nvim_buf_set_lines(0, start_line - 1, end_line, false, lines)
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("gv", true, false, true), "n", false)
-end
-
--- Bind to > and < in visual mode
-vim.keymap.set("v", ">", function() manual_indent(">") end, { noremap = true, silent = true })
-vim.keymap.set("v", "<", function() manual_indent("<") end, { noremap = true, silent = true })
 
 local history = {} -- Structure: { [win_id] = { index = 1, list = { buf1, buf2 } } }
 
