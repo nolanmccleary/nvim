@@ -27,8 +27,10 @@ vim.o.completeopt = "menuone,noinsert,noselect"
 vim.g.mapleader = " "
 vim.opt.whichwrap:append("<,>,h,l,[,]")
 vim.opt.smoothscroll = true
+vim.opt.scrolloff = 3
 vim.opt.smarttab = true
 vim.opt.shiftround = true
+
 -- ===== plugins =====
 require("lazy").setup({
   -- Install missing plugins automatically on startup
@@ -65,9 +67,10 @@ require("lazy").setup({
           require("nvim-tree").setup({
             on_attach = ovrd_on_attach,
             renderer = {
-              icons = {
-                show = { file = true, folder = true, folder_arrow = true, git = true },
-              },
+                highlight_opened_files = "none",
+                icons = {
+                    show = { file = true, folder = true, folder_arrow = true, git = true },
+                },
             },
             git = { enable = true, ignore = false },
           })
@@ -137,61 +140,15 @@ require("lazy").setup({
             vim.keymap.set("n", "<leader>gr", function() require("gitsigns").reset_hunk() end, {desc = "Reset hunk" }) 
             vim.keymap.set("n", "<leader>gd", function()
                 require("gitsigns").diffthis() 
-                vim.cmd("wincmd h")
+                --vim.cmd("wincmd h")
             end, { desc = "Git diff this" })
-            local function get_hunk_status_diff()
-                vim.schedule(function()
-                    local gs = package.loaded.gitsigns
-                    if not gs then return end
-
-                    -- Get current window and current line
-                    local cur_win = vim.api.nvim_get_current_win()
-                    local line = vim.api.nvim_win_get_cursor(cur_win)[1]
-                    
-                    -- Find the buffer in the 'other' window of the diff
-                    -- In a :Gd diff, one window is the file, one is the index.
-                    local other_win = (cur_win == vim.fn.win_getid(vim.fn.winnr('h'))) and vim.fn.win_getid(vim.fn.winnr('l')) or vim.fn.win_getid(vim.fn.winnr('h'))
-                    local target_buf = vim.api.nvim_win_get_buf(other_win)
-                    
-                    -- If the 'other' window isn't the real file, check the current one
-                    if vim.bo[target_buf].buftype ~= "" then
-                        target_buf = vim.api.nvim_win_get_buf(cur_win)
-                    end
-
-                    local hunks = gs.get_hunks(target_buf)
-                    if not hunks or #hunks == 0 then return end
-
-                    for i, hunk in ipairs(hunks) do
-                        -- SystemVerilog/C blocks can be 1 line or many; math.max handles single-line hunks
-                        local start = hunk.added.start
-                        local finish = hunk.added.start + math.max(0, hunk.added.count - 1)
-                        
-                        if line >= start and line <= finish then
-                            -- Clear the previous message and print new status
-                            vim.api.nvim_command('redraw')
-                            print(string.format("Hunk %d of %d", i, #hunks))
-                            return
-                        end
-                    end
-                end)
-            end
 
             vim.keymap.set("n", "]h", function()
-                if vim.wo.diff then
-                    vim.cmd("normal! ]c")
-                    get_hunk_status_diff()
-                else
                     require("gitsigns").nav_hunk("next")
-                end
             end)
 
             vim.keymap.set("n", "[h", function()
-                if vim.wo.diff then
-                    vim.cmd("normal! [c")
-                    get_hunk_status_diff()
-                else
                     require("gitsigns").nav_hunk("prev")
-                end
             end)
 
     	end
@@ -390,8 +347,6 @@ vim.keymap.set("n", "[s", function() swap_with_wrap(-1) end, { desc = "Swap with
 vim.keymap.set("n", "]s", function() swap_with_wrap( 1) end, { desc = "Swap with right window (wrap)" })
 
 
-
---Use Zathura to open PDF files
 vim.api.nvim_create_autocmd('FileType', {
     pattern = 'pdf',
     callback = function (args)
@@ -400,7 +355,6 @@ vim.api.nvim_create_autocmd('FileType', {
         vim.api.nvim_buf_delete(args.buf, { force = true })
     end,
 })
-
 
 vim.api.nvim_create_autocmd("FileType", {
   callback = function()
@@ -533,3 +487,31 @@ vim.api.nvim_set_hl(0, "StatusLineTermNC", { fg = "#333333", bg = "NONE" })
 vim.api.nvim_set_hl(0, "MsgArea", { fg = "#997db1" })
 vim.api.nvim_set_hl(0, "ModeMsg", { fg = "#997db1" })
 vim.api.nvim_set_hl(0, "CmdLine", { fg = "#997db1" })
+
+vim.api.nvim_set_hl(0, "LineNr", { fg = "#997db1" })
+vim.api.nvim_set_hl(0, "LineNrAbove", { fg = "#997db1" })
+vim.api.nvim_set_hl(0, "LineNrBelow", { fg = "#997db1" })
+
+vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#997db1", bold = true })
+
+vim.api.nvim_set_hl(0, "ActiveLineNr", { fg = "#997db1", bold = true })
+vim.api.nvim_set_hl(0, "InactiveLineNr", { fg = "#444444" })
+vim.api.nvim_create_autocmd({ "WinEnter", "BufEnter" }, {
+    callback = function()
+        vim.wo.winhighlight = "LineNr:ActiveLineNr,LineNrAbove:ActiveLineNr,LineNrBelow:ActiveLineNr,CursorLineNr:ActiveLineNr"
+    end,
+})
+
+vim.api.nvim_create_autocmd("WinLeave", {
+    callback = function()
+        vim.wo.winhighlight = "LineNr:InactiveLineNr,LineNrAbove:InactiveLineNr,LineNrBelow:InactiveLineNr,CursorLineNr:InactiveLineNr"
+    end,
+})
+
+vim.api.nvim_set_hl(0, "NvimTreeFolderName", { fg = "#88b0b0", bold = true })
+vim.api.nvim_set_hl(0, "NvimTreeEmptyFolderName", { fg = "#88b0b0" })
+vim.api.nvim_set_hl(0, "NvimTreeFolderIcon", { fg = "#88b0b0" })
+
+vim.api.nvim_set_hl(0, "NvimTreeOpenedFile", { fg = "#997db1", italic = true, bold = true })
+vim.api.nvim_set_hl(0, "NvimTreeOpenedFolderName", { fg = "#997db1", italic = true, bold = true })
+vim.api.nvim_set_hl(0, "NvimTreeOpenedFolderIcon", { fg = "#997db1" })
