@@ -20,14 +20,14 @@ vim.opt.smartcase = true
 vim.opt.signcolumn = "yes"
 vim.opt.swapfile = false
 vim.opt.undofile = true
---vim.opt.number = true
+vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.mouse = "a"
 vim.o.completeopt = "menuone,noinsert,noselect"
 vim.g.mapleader = " "
 vim.opt.whichwrap:append("<,>,h,l,[,]")
 vim.opt.smoothscroll = true
-vim.opt.scrolloff = 3
+vim.opt.scrolloff = 8
 vim.opt.smarttab = true
 vim.opt.shiftround = true
 
@@ -41,9 +41,9 @@ require("lazy").setup({
       "nvim-tree/nvim-tree.lua",
       lazy=false,
       dependencies = { "nvim-tree/nvim-web-devicons" },
-      keys = {
-        { "<C-n>", "<cmd>NvimTreeToggle<cr>", silent = true },
-      },
+      --keys = {
+        --{ "<C-n>", "<cmd>NvimTreeToggle | setlocal relativenumber <cr>", silent = true },
+      --},
       config = function()
         local function ovrd_on_attach(bufnr)
             local api = require("nvim-tree.api")
@@ -195,6 +195,8 @@ vim.keymap.set({ "n", "v" }, "C", '"pC', { noremap = true })
 vim.keymap.set({ "n", "v" }, "<leader>p", '"pp', { noremap = true, desc = "Paste from deletion register" })
 vim.keymap.set("v", "<leader>r", ":!tac<CR>gv", { desc = "Mirror Lines" })
 
+vim.keymap.set("n", "<leader>n", ":noh<CR>", {silent = true})
+
 vim.keymap.set("n", "[w", function()
     local cur_win = vim.api.nvim_get_current_win()
     vim.cmd("wincmd h")
@@ -210,6 +212,19 @@ vim.keymap.set("n", "]w", function()
         vim.cmd("wincmd t")
     end
 end, { desc = "Go to right window (wrap)" })
+
+
+vim.keymap.set("n", "<C-n>", function()
+  vim.cmd("NvimTreeToggle")
+  vim.defer_fn(function()
+    local view = require("nvim-tree.view")
+    if view.is_visible() then
+      vim.api.nvim_set_current_win(view.get_winnr())
+      vim.wo.relativenumber = true
+      vim.wo.cursorline = false
+    end
+  end, 0)
+end, { silent = true })
 
 
 local history = {} -- Structure: { [win_id] = { index = 1, list = { buf1, buf2 } } }
@@ -251,7 +266,12 @@ local function cleanup_history(args)
     end
 end
 
-vim.api.nvim_create_autocmd("BufEnter", { callback = update_history })
+vim.api.nvim_create_autocmd("BufEnter", { callback = function ()
+    update_history()
+    vim.wo.relativenumber = true
+    vim.wo.cursorline = false
+    vim.wo.winhighlight = "LineNr:LineNr,LineNrAbove:LineNrAbove,LineNrBelow:LineNrBelow"
+end})
 vim.api.nvim_create_autocmd("BufDelete", { callback = cleanup_history })
 
 local function navigate_local_history(delta)
@@ -365,13 +385,7 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
-vim.api.nvim_create_autocmd("WinLeave", {
-    callback = function()
-        if vim.api.nvim_get_mode().mode == "i" then
-            vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
-        end
-    end,
-})
+
 
 do
   local ok, telescope = pcall(require, "telescope")
@@ -488,24 +502,40 @@ vim.api.nvim_set_hl(0, "MsgArea", { fg = "#997db1" })
 vim.api.nvim_set_hl(0, "ModeMsg", { fg = "#997db1" })
 vim.api.nvim_set_hl(0, "CmdLine", { fg = "#997db1" })
 
-vim.api.nvim_set_hl(0, "LineNr", { fg = "#997db1" })
+vim.api.nvim_set_hl(0, "LineNr", { fg = "#88b0b0" })
 vim.api.nvim_set_hl(0, "LineNrAbove", { fg = "#997db1" })
 vim.api.nvim_set_hl(0, "LineNrBelow", { fg = "#997db1" })
 
-vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#997db1", bold = true })
+--vim.api.nvim_set_hl(0, "CursorLineNr", { fg = "#88b0b0", bold = true })
 
 vim.api.nvim_set_hl(0, "ActiveLineNr", { fg = "#997db1", bold = true })
 vim.api.nvim_set_hl(0, "InactiveLineNr", { fg = "#444444" })
-vim.api.nvim_create_autocmd({ "WinEnter", "BufEnter" }, {
-    callback = function()
-        vim.wo.winhighlight = "LineNr:ActiveLineNr,LineNrAbove:ActiveLineNr,LineNrBelow:ActiveLineNr,CursorLineNr:ActiveLineNr"
-    end,
-})
+
 
 vim.api.nvim_create_autocmd("WinLeave", {
     callback = function()
-        vim.wo.winhighlight = "LineNr:InactiveLineNr,LineNrAbove:InactiveLineNr,LineNrBelow:InactiveLineNr,CursorLineNr:InactiveLineNr"
+        if vim.api.nvim_get_mode().mode == "i" then
+            vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+        end
+        vim.wo.winhighlight = "LineNr:InactiveLineNr,LineNrAbove:InactiveLineNr,LineNrBelow:InactiveLineNr"
     end,
+})
+
+
+vim.api.nvim_create_autocmd("WinEnter", {
+  callback = function()
+        vim.wo.relativenumber = true
+        vim.wo.cursorline = false
+        vim.wo.winhighlight = "LineNr:LineNr,LineNrAbove:LineNrAbove,LineNrBelow:LineNrBelow"
+  end,
+})
+
+vim.api.nvim_create_autocmd("WinNew", {
+  callback = function()
+        vim.wo.relativenumber = true
+        vim.wo.cursorline = false
+        vim.wo.winhighlight = "LineNr:LineNr,LineNrAbove:LineNrAbove,LineNrBelow:LineNrBelow"
+  end,
 })
 
 vim.api.nvim_set_hl(0, "NvimTreeFolderName", { fg = "#88b0b0", bold = true })
