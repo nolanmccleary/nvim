@@ -299,6 +299,32 @@ vim.keymap.set("n", "[c", function() navigate_local_history(-1) end, { desc = "L
 vim.keymap.set("n", "]c", function() navigate_local_history(1) end, { desc = "Local Forward" })
 
 
+local function global_find_forward()
+  local c = vim.fn.getcharstr()
+  if c == "" then return end
+
+  local pat = "\\V" .. vim.fn.escape(c, "\\")
+  local n = vim.v.count1
+
+  for _ = 1, n do
+    vim.fn.search(pat, "W")
+  end
+end
+
+local function global_find_backward()
+  local c = vim.fn.getcharstr()
+  if c == "" then return end
+
+  local pat = "\\V" .. vim.fn.escape(c, "\\")
+  local n = vim.v.count1
+
+  for _ = 1, n do
+    vim.fn.search(pat, "bW")
+  end
+end
+
+vim.keymap.set("n", "f", global_find_forward,  { noremap = true, silent = true })
+vim.keymap.set("n", "F", global_find_backward, { noremap = true, silent = true })
 
 
 _G.last_motion = nil
@@ -364,7 +390,15 @@ do
   end, vim.api.nvim_create_namespace("last_motion_tracker"))
 end
 
-vim.keymap.set("n", "m", function()
+vim.keymap.set("n", "\\", function()
+  if _G.last_motion then
+    vim.cmd("normal " .. _G.last_motion)
+  else
+    vim.notify("No last motion yet", vim.log.levels.INFO)
+  end
+end, { noremap = true, silent = true, desc = "Repeat last motion" })
+
+vim.keymap.set("v", "\\", function()
   if _G.last_motion then
     vim.cmd("normal " .. _G.last_motion)
   else
@@ -373,6 +407,43 @@ vim.keymap.set("n", "m", function()
 end, { noremap = true, silent = true, desc = "Repeat last motion" })
 
 
+
+
+
+local last_char = nil
+local last_dir = 1 -- 1 = forward, -1 = backward
+
+local function global_find(dir)
+  local c = vim.fn.getcharstr()
+  if c == "" then return end
+
+  last_char = c
+  last_dir = dir
+
+  local pat = "\\V" .. vim.fn.escape(c, "\\")
+  local flags = (dir == 1) and "W" or "bW"
+
+  for _ = 1, vim.v.count1 do
+    vim.fn.search(pat, flags)
+  end
+end
+
+vim.keymap.set("n", "f", function() global_find(1) end,  { noremap = true, silent = true })
+vim.keymap.set("n", "F", function() global_find(-1) end, { noremap = true, silent = true })
+
+vim.keymap.set("n", ";", function()
+  if not last_char then return end
+  local pat = "\\V" .. vim.fn.escape(last_char, "\\")
+  local flags = (last_dir == 1) and "W" or "bW"
+  vim.fn.search(pat, flags)
+end, { noremap = true, silent = true })
+
+vim.keymap.set("n", ",", function()
+  if not last_char then return end
+  local pat = "\\V" .. vim.fn.escape(last_char, "\\")
+  local flags = (last_dir == 1) and "bW" or "W"
+  vim.fn.search(pat, flags)
+end, { noremap = true, silent = true })
 
 
 
