@@ -300,6 +300,83 @@ vim.keymap.set("n", "]c", function() navigate_local_history(1) end, { desc = "Lo
 
 
 
+
+_G.last_motion = nil
+
+do
+  local pending_count = ""
+  local pending_g = false
+
+  local function is_digit(k)
+    return k:match("^%d$") ~= nil
+  end
+
+  local simple_motions = {
+    h=true, j=true, k=true, l=true,
+    w=true, b=true, e=true,
+    ["0"]=true, ["^"]=true, ["$"]=true,
+    G=true,
+  }
+
+  vim.on_key(function(key)
+    if key == "" or key:sub(1,1) == "<" then
+      return
+    end
+
+    if is_digit(key) then
+      if pending_count == "" and key == "0" then
+        _G.last_motion = "0"
+      else
+        pending_count = pending_count .. key
+      end
+      pending_g = false
+      return
+    end
+
+    if pending_g then
+      if key == "g" then
+        _G.last_motion = (pending_count ~= "" and pending_count or "") .. "gg"
+      elseif key == "e" then
+        _G.last_motion = (pending_count ~= "" and pending_count or "") .. "ge"
+      end
+      pending_count = ""
+      pending_g = false
+      return
+    end
+
+    if key == "g" then
+      pending_g = true
+      return
+    end
+
+    if simple_motions[key] then
+    local store_key = key
+
+    if key == "j" then store_key = "k" end
+    if key == "k" then store_key = "j" end
+
+    _G.last_motion = (pending_count ~= "" and pending_count or "") .. store_key
+    pending_count = ""
+    return
+    end
+
+    pending_count = ""
+  end, vim.api.nvim_create_namespace("last_motion_tracker"))
+end
+
+vim.keymap.set("n", "m", function()
+  if _G.last_motion then
+    vim.cmd("normal " .. _G.last_motion)
+  else
+    vim.notify("No last motion yet", vim.log.levels.INFO)
+  end
+end, { noremap = true, silent = true, desc = "Repeat last motion" })
+
+
+
+
+
+
 local function is_swappable_win(win)
   local buf = vim.api.nvim_win_get_buf(win)
   local bt = vim.bo[buf].buftype

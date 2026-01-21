@@ -1,3 +1,4 @@
+
 -- lua/lsp.lua
 
 vim.api.nvim_create_autocmd("LspAttach", {
@@ -11,35 +12,58 @@ vim.api.nvim_create_autocmd("LspAttach", {
   end,
 })
 
-local cmp = require('cmp')
+local cmp = require("cmp")
+local luasnip = require("luasnip")
+
 cmp.setup({
- 
-    snippet = {
+  snippet = {
     expand = function(args)
-      require('luasnip').lsp_expand(args.body)
+      luasnip.lsp_expand(args.body)
     end,
   },
-  
+
   mapping = cmp.mapping.preset.insert({
-    ['<Tab>'] = cmp.mapping.confirm({ select = true }),
+
+    -- TAB cycles forward through completion items
+    ["<Tab>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      elseif luasnip.expand_or_jumpable() then
+        luasnip.expand_or_jump()
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+
+    -- SHIFT+TAB cycles backward
+    ["<S-Tab>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif luasnip.jumpable(-1) then
+        luasnip.jump(-1)
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+
+    -- ENTER confirms selection
+    ["<CR>"] = cmp.mapping.confirm({ select = true }),
   }),
-  
+
   sources = cmp.config.sources({
-    { name = 'nvim_lsp' },
-    { name = 'luasnip' },
-  }, 
-  {
-    { name = 'buffer' },
-    { name = 'path' },
-  })
+    { name = "nvim_lsp" },
+    { name = "luasnip" },
+  }, {
+    { name = "buffer" },
+    { name = "path" },
+  }),
 })
 
-capabilities = require('cmp_nvim_lsp').default_capabilities()
+capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-vim.lsp.config('*', {
-    capabilities = capabilities,
+vim.lsp.config("*", {
+  capabilities = capabilities,
 })
-
 
 vim.lsp.config("slang-server", {
   cmd = { "/home/nolan/.local/share/nvim/slang-server/build/bin/slang-server" },
@@ -51,7 +75,7 @@ vim.lsp.config("slang-server", {
 })
 
 vim.lsp.enable("slang-server")
-vim.lsp.enable('bashls')
-vim.lsp.enable('lua_ls')
-vim.lsp.enable('pyright')
-vim.lsp.enable('clangd')
+vim.lsp.enable("bashls")
+vim.lsp.enable("lua_ls")
+vim.lsp.enable("pyright")
+vim.lsp.enable("clangd")
