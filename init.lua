@@ -693,3 +693,28 @@ vim.api.nvim_set_hl(0, "NvimTreeFolderIcon", { fg = "#88b0b0" })
 vim.api.nvim_set_hl(0, "NvimTreeOpenedFile", { fg = "#997db1", italic = true, bold = true })
 vim.api.nvim_set_hl(0, "NvimTreeOpenedFolderName", { fg = "#997db1", italic = true, bold = true })
 vim.api.nvim_set_hl(0, "NvimTreeOpenedFolderIcon", { fg = "#997db1" })
+
+
+local function get_file_age()
+    local file_path = vim.api.nvim_buf_get_name(0)
+    if file_path == "" then return "New File" end
+
+    local stats = vim.uv.fs_stat(file_path)
+    if not stats then return "Unknown" end
+
+    local mtime = stats.mtime.sec
+    local now = os.time()
+    local diff = now - mtime
+
+    -- Convert seconds into a human-readable format
+    if diff < 60 then return diff .. "s ago"
+    elseif diff < 3600 then return math.floor(diff / 60) .. "m ago"
+    elseif diff < 86400 then return math.floor(diff / 3600) .. "h ago"
+    else return math.floor(diff / 86400) .. "d ago"
+    end
+end
+
+-- Example usage: Print age to the command line
+vim.keymap.set('n', '<leader>a', function()
+    print("File modified: " .. get_file_age())
+end, { desc = "Check file age" })
