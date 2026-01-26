@@ -644,54 +644,32 @@ vim.api.nvim_create_autocmd("FileType", {
 
 
 
+
 do
   local ok, telescope = pcall(require, "telescope")
   if ok then
-    local vimgrep = { 
-      "rg", 
-      "--color=never", 
-      "--no-heading", 
-      "--with-filename", 
-      "--line-number", 
-      "--column", 
-      "--smart-case",
-      "--no-ignore", 
-      "--hidden"     
-    }
-
-    if vim.fn.executable("rga") == 1 then
-      vimgrep = { 
-        "rga", 
-        "--color=never", 
-        "--no-heading", 
-        "--with-filename", 
-        "--line-number", 
-        "--column", 
-        "--smart-case",
-        "--no-ignore", 
-        "--hidden"
-      }
-    end
-
     telescope.setup({
       defaults = {
-        vimgrep_arguments = vimgrep,
+        vimgrep_arguments = {
+          "rg",
+          "--color=never",
+          "--no-heading",
+          "--with-filename",
+          "--line-number",
+          "--column",
+          "--smart-case",
+          -- IMPORTANT: no "--no-ignore", no "--hidden"
+        },
       },
       pickers = {
         find_files = {
-          no_ignore = true,
-          hidden = true,
+          hidden = false,   -- normal find_files
+          no_ignore = false -- respects .gitignore
         },
-        live_grep = {
-           additional_args = function(opts)
-                return {"--no-ignore", "--hidden"}
-           end
-        }
-      }
+      },
     })
   end
 end
-
 
 
 
@@ -827,3 +805,29 @@ end
 vim.keymap.set('n', '<leader>a', function()
     print("File modified: " .. get_file_age())
 end, { desc = "Check file age" })
+
+
+
+
+local builtin = require("telescope.builtin")
+
+-- Normal (respects .gitignore)
+vim.keymap.set("n", "<leader>ff", builtin.find_files, { desc = "Find files (gitignore)" })
+vim.keymap.set("n", "<leader>fg", builtin.live_grep,  { desc = "Live grep (gitignore)" })
+
+-- "J" and "K" variants (include ignored + hidden)
+vim.keymap.set("n", "<leader>fj", function()
+  builtin.find_files({
+    hidden = true,
+    no_ignore = true,
+    follow = true,
+  })
+end, { desc = "Find files (ALL incl ignored)" })
+
+vim.keymap.set("n", "<leader>fk", function()
+  builtin.live_grep({
+    additional_args = function()
+      return { "--hidden", "--no-ignore" }
+    end,
+  })
+end, { desc = "Live grep (ALL incl ignored)" })
