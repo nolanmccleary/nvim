@@ -38,43 +38,152 @@ require("lazy").setup({
 
   spec = {
     {
-      "nvim-tree/nvim-tree.lua",
-      lazy=false,
-      dependencies = { "nvim-tree/nvim-web-devicons" },
-      --keys = {
-        --{ "<C-n>", "<cmd>NvimTreeToggle | setlocal relativenumber <cr>", silent = true },
-      --},
-      config = function()
+        "nvim-tree/nvim-tree.lua",
+        lazy=false,
+        dependencies = { "nvim-tree/nvim-web-devicons" },
+        --keys = {
+            --{ "<C-n>", "<cmd>NvimTreeToggle | setlocal relativenumber <cr>", silent = true },
+        --},
+      
+        config = function()
         local function ovrd_on_attach(bufnr)
             local api = require("nvim-tree.api")
+
             local function opts(desc)
-                return {desc = "nvim-tree: " .. desc, buffer = bufnr, noremap = true, silent = true, nowait = true }
+            return {
+                desc = "nvim-tree: " .. desc,
+                buffer = bufnr,
+                noremap = true,
+                silent = true,
+                nowait = true,
+            }
             end
+
             api.config.mappings.default_on_attach(bufnr)
 
-            vim.keymap.set('n', 'vl', function()
-                vim.opt.splitright = false
-                api.node.open.vertical()
-            end, opts('Vertical Split Left'))
+            -- ===== 1) AUTO-RESIZE TREE TO FIT LONGEST VISIBLE LINE =====
+            local resize_pending = false
 
-            vim.keymap.set('n', 'vr', function()
-                vim.opt.splitright = true
-                api.node.open.vertical()
-            end, opts('Vertical Split Right'))
+            local function compute_needed_width()
+            local view = require("nvim-tree.view")
+            if not view.is_visible() then return nil end
 
+            local wnr = view.get_winnr()
+            if not wnr then return nil end
+
+            local tree_buf = vim.api.nvim_win_get_buf(wnr)
+            if not vim.api.nvim_buf_is_valid(tree_buf) then return nil end
+
+            local lines = vim.api.nvim_buf_get_lines(tree_buf, 0, -1, false)
+
+            local maxw = 0
+            for _, line in ipairs(lines) do
+                local w = vim.fn.strdisplaywidth(line)
+                if w > maxw then maxw = w end
+            end
+
+            -- padding so the last character isn't right on the edge
+            maxw = maxw + 2
+
+            -- min + max clamp (max = % of screen so it doesn't eat your editor)
+            local minw = 30
+            local maxw_cap = math.floor(vim.o.columns * 0.70)
+
+            if maxw < minw then maxw = minw end
+            if maxw > maxw_cap then maxw = maxw_cap end
+
+            return maxw
+            end
+
+            local function resize_tree()
+            local target = compute_needed_width()
+            if not target then return end
+            pcall(api.tree.resize, { width = target })
+            end
+
+            local function schedule_resize()
+            if resize_pending then return end
+            resize_pending = true
+            vim.defer_fn(function()
+                resize_pending = false
+                resize_tree()
+            end, 30)
+            end
+
+            -- Resize when tree opens / cursor moves / view changes
+            vim.api.nvim_create_autocmd(
+            { "BufEnter", "CursorMoved", "VimResized", "WinResized" },
+            { buffer = bufnr, callback = schedule_resize }
+            )
+
+            -- Your existing split open mappings
+            vim.keymap.set("n", "vl", function()
+            vim.opt.splitright = false
+            api.node.open.vertical()
+            schedule_resize()
+            end, opts("Vertical Split Left"))
+
+            vim.keymap.set("n", "vr", function()
+            vim.opt.splitright = true
+            api.node.open.vertical()
+            schedule_resize()
+            end, opts("Vertical Split Right"))
+
+            -- ===== 2) "\" CLOSES THE FOLDER YOU'RE INSIDE =====
+            -- If you're on a file inside an opened folder -> close its parent folder.
+            -- If you're on an opened folder -> close that folder.
+            
+            -- "\" CLOSES THE FOLDER YOU'RE INSIDE (works on new nvim-tree)
+            vim.keymap.set("n", "\\", function()
+                local node = api.tree.get_node_under_cursor()
+                if not node then return end
+
+                -- If cursor is on an OPEN folder -> close it
+                if node.type == "directory" and node.open then
+                    api.node.open.edit() -- toggles folder open/close
+                else
+                    -- If cursor is on a file (or anything inside a folder) -> close the parent folder
+                    api.node.navigate.parent_close()
+                end
+
+                schedule_resize()
+            end, opts("Close folder you're inside"))
+
+            -- One resize right after attach
+            schedule_resize()
         end
 
-          require("nvim-tree").setup({
+        require("nvim-tree").setup({
             on_attach = ovrd_on_attach,
-            renderer = {
-                highlight_opened_files = "none",
-                icons = {
-                    show = { file = true, folder = true, folder_arrow = true, git = true },
-                },
+            
+            sync_root_with_cwd = true,
+            respect_buf_cwd = true,
+            update_focused_file = {
+            enable = true,
+            update_root = true,
             },
+            view = {
+            adaptive_size = true, -- lets nvim-tree resize itself instead of fixed width
+            -- You can still set a minimum width:
+            width = { min = 30 },
+            },
+
+            renderer = {
+            highlight_opened_files = "none",
+            icons = {
+                show = { file = true, folder = true, folder_arrow = true, git = true },
+            },
+            },
+
             git = { enable = true, ignore = false },
-          })
-      end,
+        })
+        end,
+    
+
+
+
+
+
     },
 
     {
