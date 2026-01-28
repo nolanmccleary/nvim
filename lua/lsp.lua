@@ -24,7 +24,6 @@ cmp.setup({
 
   mapping = cmp.mapping.preset.insert({
 
-    -- TAB cycles forward through completion items
     ["<Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
@@ -35,7 +34,6 @@ cmp.setup({
       end
     end, { "i", "s" }),
 
-    -- SHIFT+TAB cycles backward
     ["<S-Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_prev_item()
@@ -46,7 +44,6 @@ cmp.setup({
       end
     end, { "i", "s" }),
 
-    -- ENTER confirms selection
     ["<CR>"] = cmp.mapping.confirm({ select = true }),
   }),
 

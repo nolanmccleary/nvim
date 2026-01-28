@@ -37,154 +37,350 @@ require("lazy").setup({
   install = { missing = true },
 
   spec = {
-    {
-        "nvim-tree/nvim-tree.lua",
-        lazy=false,
-        dependencies = { "nvim-tree/nvim-web-devicons" },
-        --keys = {
-            --{ "<C-n>", "<cmd>NvimTreeToggle | setlocal relativenumber <cr>", silent = true },
-        --},
-      
-        config = function()
-        local function ovrd_on_attach(bufnr)
-            local api = require("nvim-tree.api")
+--    {
+--        "nvim-tree/nvim-tree.lua",
+--        lazy=false,
+--        dependencies = { "nvim-tree/nvim-web-devicons" },
+--        --keys = {
+--            --{ "<C-n>", "<cmd>NvimTreeToggle | setlocal relativenumber <cr>", silent = true },
+--        --},
+--      
+--        config = function()
+--        local function ovrd_on_attach(bufnr)
+--            local api = require("nvim-tree.api")
+--
+--            local function opts(desc)
+--            return {
+--                desc = "nvim-tree: " .. desc,
+--                buffer = bufnr,
+--                noremap = true,
+--                silent = true,
+--                nowait = true,
+--            }
+--            end
+--
+--            api.config.mappings.default_on_attach(bufnr)
+--
+--            -- ===== 1) AUTO-RESIZE TREE TO FIT LONGEST VISIBLE LINE =====
+--            local resize_pending = false
+--
+--            local function compute_needed_width()
+--            local view = require("nvim-tree.view")
+--            if not view.is_visible() then return nil end
+--
+--            local wnr = view.get_winnr()
+--            if not wnr then return nil end
+--
+--            local tree_buf = vim.api.nvim_win_get_buf(wnr)
+--            if not vim.api.nvim_buf_is_valid(tree_buf) then return nil end
+--
+--            local lines = vim.api.nvim_buf_get_lines(tree_buf, 0, -1, false)
+--
+--            local maxw = 0
+--            for _, line in ipairs(lines) do
+--                local w = vim.fn.strdisplaywidth(line)
+--                if w > maxw then maxw = w end
+--            end
+--
+--            -- padding so the last character isn't right on the edge
+--            maxw = maxw + 2
+--
+--            -- min + max clamp (max = % of screen so it doesn't eat your editor)
+--            local minw = 30
+--            local maxw_cap = math.floor(vim.o.columns * 0.70)
+--
+--            if maxw < minw then maxw = minw end
+--            if maxw > maxw_cap then maxw = maxw_cap end
+--
+--            return maxw
+--            end
+--
+--            local function resize_tree()
+--            local target = compute_needed_width()
+--            if not target then return end
+--            pcall(api.tree.resize, { width = target })
+--            end
+--
+--            local function schedule_resize()
+--            if resize_pending then return end
+--            resize_pending = true
+--            vim.defer_fn(function()
+--                resize_pending = false
+--                resize_tree()
+--            end, 30)
+--            end
+--
+--            -- Resize when tree opens / cursor moves / view changes
+--            vim.api.nvim_create_autocmd(
+--            { "BufEnter", "CursorMoved", "VimResized", "WinResized" },
+--            { buffer = bufnr, callback = schedule_resize }
+--            )
+--
+--            -- Your existing split open mappings
+--            vim.keymap.set("n", "vl", function()
+--            vim.opt.splitright = false
+--            api.node.open.vertical()
+--            schedule_resize()
+--            end, opts("Vertical Split Left"))
+--
+--            vim.keymap.set("n", "vr", function()
+--            vim.opt.splitright = true
+--            api.node.open.vertical()
+--            schedule_resize()
+--            end, opts("Vertical Split Right"))
+--
+--            -- ===== 2) "\" CLOSES THE FOLDER YOU'RE INSIDE =====
+--            -- If you're on a file inside an opened folder -> close its parent folder.
+--            -- If you're on an opened folder -> close that folder.
+--            
+--            -- "\" CLOSES THE FOLDER YOU'RE INSIDE (works on new nvim-tree)
+--            vim.keymap.set("n", "\\", function()
+--                local node = api.tree.get_node_under_cursor()
+--                if not node then return end
+--
+--                -- If cursor is on an OPEN folder -> close it
+--                if node.type == "directory" and node.open then
+--                    api.node.open.edit() -- toggles folder open/close
+--                else
+--                    -- If cursor is on a file (or anything inside a folder) -> close the parent folder
+--                    api.node.navigate.parent_close()
+--                end
+--
+--                schedule_resize()
+--            end, opts("Close folder you're inside"))
+--
+--            -- One resize right after attach
+--            schedule_resize()
+--        end
+--
+--        require("nvim-tree").setup({
+--            on_attach = ovrd_on_attach,
+--            
+--            sync_root_with_cwd = true,
+--            respect_buf_cwd = true,
+--            update_focused_file = {
+--            enable = true,
+--            update_root = true,
+--            },
+--            view = {
+--            adaptive_size = true, -- lets nvim-tree resize itself instead of fixed width
+--            -- You can still set a minimum width:
+--            width = { min = 30 },
+--            },
+--
+--            renderer = {
+--            highlight_opened_files = "none",
+--            icons = {
+--                show = { file = true, folder = true, folder_arrow = true, git = true },
+--            },
+--            },
+--
+--            git = { enable = true, ignore = false },
+--        })
+--        end,
+--    
+--
+--
+--
+--
+--
+--    },
+--
 
-            local function opts(desc)
-            return {
-                desc = "nvim-tree: " .. desc,
-                buffer = bufnr,
-                noremap = true,
-                silent = true,
-                nowait = true,
-            }
-            end
+    
+        {
+            "stevearc/oil.nvim",
+            lazy = false,
+            dependencies = { "nvim-tree/nvim-web-devicons" },
+            config = function()
+                local oil = require("oil")
 
-            api.config.mappings.default_on_attach(bufnr)
+                -- ---- Sidebar handling ----
+                local oil_sidebar_win = nil
 
-            -- ===== 1) AUTO-RESIZE TREE TO FIT LONGEST VISIBLE LINE =====
-            local resize_pending = false
-
-            local function compute_needed_width()
-            local view = require("nvim-tree.view")
-            if not view.is_visible() then return nil end
-
-            local wnr = view.get_winnr()
-            if not wnr then return nil end
-
-            local tree_buf = vim.api.nvim_win_get_buf(wnr)
-            if not vim.api.nvim_buf_is_valid(tree_buf) then return nil end
-
-            local lines = vim.api.nvim_buf_get_lines(tree_buf, 0, -1, false)
-
-            local maxw = 0
-            for _, line in ipairs(lines) do
-                local w = vim.fn.strdisplaywidth(line)
-                if w > maxw then maxw = w end
-            end
-
-            -- padding so the last character isn't right on the edge
-            maxw = maxw + 2
-
-            -- min + max clamp (max = % of screen so it doesn't eat your editor)
-            local minw = 30
-            local maxw_cap = math.floor(vim.o.columns * 0.70)
-
-            if maxw < minw then maxw = minw end
-            if maxw > maxw_cap then maxw = maxw_cap end
-
-            return maxw
-            end
-
-            local function resize_tree()
-            local target = compute_needed_width()
-            if not target then return end
-            pcall(api.tree.resize, { width = target })
-            end
-
-            local function schedule_resize()
-            if resize_pending then return end
-            resize_pending = true
-            vim.defer_fn(function()
-                resize_pending = false
-                resize_tree()
-            end, 30)
-            end
-
-            -- Resize when tree opens / cursor moves / view changes
-            vim.api.nvim_create_autocmd(
-            { "BufEnter", "CursorMoved", "VimResized", "WinResized" },
-            { buffer = bufnr, callback = schedule_resize }
-            )
-
-            -- Your existing split open mappings
-            vim.keymap.set("n", "vl", function()
-            vim.opt.splitright = false
-            api.node.open.vertical()
-            schedule_resize()
-            end, opts("Vertical Split Left"))
-
-            vim.keymap.set("n", "vr", function()
-            vim.opt.splitright = true
-            api.node.open.vertical()
-            schedule_resize()
-            end, opts("Vertical Split Right"))
-
-            -- ===== 2) "\" CLOSES THE FOLDER YOU'RE INSIDE =====
-            -- If you're on a file inside an opened folder -> close its parent folder.
-            -- If you're on an opened folder -> close that folder.
-            
-            -- "\" CLOSES THE FOLDER YOU'RE INSIDE (works on new nvim-tree)
-            vim.keymap.set("n", "\\", function()
-                local node = api.tree.get_node_under_cursor()
-                if not node then return end
-
-                -- If cursor is on an OPEN folder -> close it
-                if node.type == "directory" and node.open then
-                    api.node.open.edit() -- toggles folder open/close
-                else
-                    -- If cursor is on a file (or anything inside a folder) -> close the parent folder
-                    api.node.navigate.parent_close()
+                local function is_valid_win(win)
+                return win and vim.api.nvim_win_is_valid(win)
                 end
 
-                schedule_resize()
-            end, opts("Close folder you're inside"))
+                local function is_oil_win(win)
+                if not is_valid_win(win) then return false end
+                local buf = vim.api.nvim_win_get_buf(win)
+                return vim.bo[buf].filetype == "oil"
+                end
 
-            -- One resize right after attach
-            schedule_resize()
-        end
+                local function open_oil_sidebar(dir)
+                dir = dir or vim.fn.getcwd()
 
-        require("nvim-tree").setup({
-            on_attach = ovrd_on_attach,
-            
-            sync_root_with_cwd = true,
-            respect_buf_cwd = true,
-            update_focused_file = {
-            enable = true,
-            update_root = true,
-            },
-            view = {
-            adaptive_size = true, -- lets nvim-tree resize itself instead of fixed width
-            -- You can still set a minimum width:
-            width = { min = 30 },
-            },
+                if is_oil_win(oil_sidebar_win) then
+                    vim.api.nvim_set_current_win(oil_sidebar_win)
+                    oil.open(dir)
+                    return
+                end
 
-            renderer = {
-            highlight_opened_files = "none",
-            icons = {
-                show = { file = true, folder = true, folder_arrow = true, git = true },
-            },
-            },
+                vim.cmd("topleft vsplit")
+                oil_sidebar_win = vim.api.nvim_get_current_win()
+                vim.cmd("wincmd H")
+                vim.api.nvim_win_set_width(oil_sidebar_win, 35)
+                vim.wo.winfixwidth = true
 
-            git = { enable = true, ignore = false },
-        })
-        end,
+                vim.o.splitright = true
+                oil.open(dir)
+                end
+
+                local function close_oil_sidebar()
+                if is_oil_win(oil_sidebar_win) then
+                    pcall(vim.api.nvim_win_close, oil_sidebar_win, true)
+                end
+                oil_sidebar_win = nil
+                end
+
+                local function toggle_oil_sidebar()
+                if is_oil_win(oil_sidebar_win) then
+                    close_oil_sidebar()
+                else
+                    open_oil_sidebar(vim.fn.getcwd())
+                end
+                end
+
+                -- ---- Window picker (A/B/C/...) ----
+                local function pick_target_window()
+                local wins = vim.api.nvim_tabpage_list_wins(0)
+                local candidates = {}
+
+                for _, w in ipairs(wins) do
+                    local buf = vim.api.nvim_win_get_buf(w)
+                    local bt = vim.bo[buf].buftype
+                    local ft = vim.bo[buf].filetype
+                    if bt == "" and ft ~= "oil" then
+                    table.insert(candidates, w)
+                    end
+                end
+
+                table.sort(candidates, function(a, b)
+                    local pa = vim.api.nvim_win_get_position(a)
+                    local pb = vim.api.nvim_win_get_position(b)
+                    if pa[2] == pb[2] then return pa[1] < pb[1] end
+                    return pa[2] < pb[2]
+                end)
+
+                if #candidates == 0 then
+                    vim.notify("No target windows to split into", vim.log.levels.WARN)
+                    return nil
+                end
+
+                local letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                local msg = {}
+                for i, w in ipairs(candidates) do
+                    local buf = vim.api.nvim_win_get_buf(w)
+                    local name = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ":t")
+                    table.insert(msg, string.format("%s:%s", letters:sub(i,i), name ~= "" and name or "[No Name]"))
+                end
+
+                vim.notify("Pick target → " .. table.concat(msg, "  |  "), vim.log.levels.INFO)
+
+                local c = vim.fn.getcharstr():upper()
+                local idx = letters:find(c, 1, true)
+                if not idx or idx > #candidates then return nil end
+                return candidates[idx]
+                end
+
+                local function open_entry_on_target(mode) -- "edit", "left", or "right"
+                    local entry = oil.get_cursor_entry()
+                    local dir = oil.get_current_dir()
+                    if not entry or not dir then return end
+
+                    if entry.type == "directory" then
+                        oil.select()
+                        return
+                    end
+
+                    local wins = vim.api.nvim_tabpage_list_wins(0)
+                    local candidates = {}
+
+                    for _, w in ipairs(wins) do
+                        local buf = vim.api.nvim_win_get_buf(w)
+                        local bt = vim.bo[buf].buftype
+                        local ft = vim.bo[buf].filetype
+                        if bt == "" and ft ~= "oil" then
+                            table.insert(candidates, w)
+                        end
+                    end
+
+                    local target
+                    if #candidates == 0 then
+                        -- NO WINDOWS CASE: Create a new split to the right of Oil
+                        vim.cmd("vsplit")
+                        target = vim.api.nvim_get_current_win()
+                        -- Ensure we don't accidentally split the sidebar itself
+                        vim.api.nvim_win_set_width(oil_sidebar_win, 35) 
+                    elseif #candidates == 1 then
+                        target = candidates[1]
+                    else
+                        target = pick_target_window()
+                    end
+
+                    if not target then return end
+
+                    vim.api.nvim_set_current_win(target)
+
+                    if mode == "edit" then
+                        vim.cmd("edit " .. vim.fn.fnameescape(dir .. entry.name))
+                    else
+                        local old = vim.o.splitright
+                        vim.o.splitright = (mode == "right")
+                        vim.cmd("vsplit " .. vim.fn.fnameescape(dir .. entry.name))
+                        vim.o.splitright = old
+                    end
+
+                    if is_oil_win(oil_sidebar_win) then
+                        vim.api.nvim_set_current_win(oil_sidebar_win)
+                    end
+                end
+
+                -- ---- Modified Oil Setup ----
+                oil.setup({
+                    default_file_explorer = true,
+                    columns = { "icon" },
+                    view_options = { show_hidden = false },
+                    keymaps = {
+                        ["g?"] = "actions.show_help",
+                        ["q"]  = "actions.close",
+                        ["\\"] = "actions.parent",
+                        
+                        -- NEW: Pressing Enter now triggers the A/B/C picker then opens in that window
+                        ["<CR>"] = { 
+                            desc = "Open in chosen window", 
+                            callback = function() open_entry_on_target("edit") end 
+                        },
+                        
+                        -- Existing specialized splits
+                        ["vl"] = { 
+                            desc = "Vsplit LEFT of chosen window",  
+                            callback = function() open_entry_on_target("left") end 
+                        },
+                        ["vr"] = { 
+                            desc = "Vsplit RIGHT of chosen window", 
+                            callback = function() open_entry_on_target("right") end 
+                        },
+                    },
+                })
+                -- Toggle sidebar with <C-n>
+                vim.keymap.set("n", "<C-n>", toggle_oil_sidebar, { silent = true, desc = "Toggle Oil sidebar (cwd)" })
+
+                -- Keep Oil synced to :cd
+                vim.api.nvim_create_autocmd("DirChanged", {
+                callback = function()
+                    if is_oil_win(oil_sidebar_win) then
+                    vim.api.nvim_win_call(oil_sidebar_win, function()
+                        oil.open(vim.fn.getcwd())
+                    end)
+                    end
+                end,
+                })
+            end,
+        },
+
     
-
-
-
-
-
-    },
 
     {
       "ellisonleao/glow.nvim",
@@ -295,7 +491,6 @@ vim.keymap.set("n", "]b", ":bnext<CR>", { silent = true })
 vim.keymap.set("n", "<leader>bd", ":bdelete<CR>", { silent = true })
 vim.keymap.set("n", "<leader>vst", ":vsplit | term<CR>", {silent = true })
 vim.keymap.set("n", "<leader>st", ":split | term<CR>", {silent = true })
-vim.keymap.set("n", "<leader>cwd", ":lua require('nvim-tree.api').tree.change_root(vim.fn.getcwd())<CR>", {silent = true}) 
 vim.keymap.set('t', '<Esc>', [[<C-\><C-n>]], { desc = "Exit terminal mode" })
 vim.keymap.set({ "n", "v" }, "d", '"pd', { noremap = true })
 vim.keymap.set({ "n", "v" }, "D", '"pD', { noremap = true })
@@ -322,18 +517,6 @@ vim.keymap.set("n", "]w", function()
     end
 end, { desc = "Go to right window (wrap)" })
 
-
-vim.keymap.set("n", "<C-n>", function()
-  vim.cmd("NvimTreeToggle")
-  vim.defer_fn(function()
-    local view = require("nvim-tree.view")
-    if view.is_visible() then
-      vim.api.nvim_set_current_win(view.get_winnr())
-      vim.wo.relativenumber = true
-      vim.wo.cursorline = false
-    end
-  end, 0)
-end, { silent = true })
 
 
 local history = {} -- Structure: { [win_id] = { index = 1, list = { buf1, buf2 } } }
