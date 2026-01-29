@@ -238,7 +238,18 @@ require("lazy").setup({
                 if is_oil_win(oil_sidebar_win) then
                     close_oil_sidebar()
                 else
-                    open_oil_sidebar(vim.fn.getcwd())
+                    
+                    local buf = vim.api.nvim_get_current_buf()
+                    local name = vim.api.nvim_buf_get_name(buf)
+
+                    local dir
+                    if name ~= "" then
+                    dir = vim.fn.fnamemodify(name, ":p:h")
+                    else
+                    dir = vim.fn.getcwd()
+                    end
+
+                    open_oil_sidebar(dir)
                 end
                 end
 
@@ -346,21 +357,19 @@ require("lazy").setup({
                         ["g?"] = "actions.show_help",
                         ["q"]  = "actions.close",
                         ["\\"] = "actions.parent",
-                        
-                        -- NEW: Pressing Enter now triggers the A/B/C picker then opens in that window
+
                         ["<CR>"] = { 
                             desc = "Open in chosen window", 
                             callback = function() open_entry_on_target("edit") end 
                         },
-                        
-                        -- Existing specialized splits
-                        ["vl"] = { 
-                            desc = "Vsplit LEFT of chosen window",  
-                            callback = function() open_entry_on_target("left") end 
+
+                        ["<C-k>"] = {
+                            desc = "Vsplit LEFT of chosen window",
+                            callback = function() open_entry_on_target("left") end,
                         },
-                        ["vr"] = { 
-                            desc = "Vsplit RIGHT of chosen window", 
-                            callback = function() open_entry_on_target("right") end 
+                        ["<C-l>"] = {
+                            desc = "Vsplit RIGHT of chosen window",
+                            callback = function() open_entry_on_target("right") end,
                         },
                     },
                 })
@@ -1014,3 +1023,49 @@ vim.keymap.set("n", "<leader>fk", function()
     end,
   })
 end, { desc = "Live grep (ALL incl ignored)" })
+
+
+local function smart_edge_resize(dir)
+  local cur = vim.api.nvim_get_current_win()
+
+  local function win_exists(cmd)
+    vim.cmd(cmd)
+    local moved = vim.api.nvim_get_current_win() ~= cur
+    vim.api.nvim_set_current_win(cur)
+    return moved
+  end
+
+  local delta = 5
+
+  if dir == "left" then
+    if win_exists("wincmd h") then
+      vim.cmd("wincmd h")
+      vim.cmd("vertical resize -" .. delta)
+      vim.api.nvim_set_current_win(cur)
+    else
+      vim.cmd("vertical resize +" .. delta)
+    end
+  else
+    if win_exists("wincmd h") then
+      vim.cmd("wincmd h")
+      vim.cmd("vertical resize +" .. delta)
+      vim.api.nvim_set_current_win(cur)
+    else
+      vim.cmd("vertical resize -" .. delta)
+    end
+  end
+end
+
+
+vim.keymap.set("n", "<C-]>", function()
+  if vim.bo.filetype ~= "oil" then
+    smart_edge_resize("right")
+  end
+end, { silent = true })
+
+vim.keymap.set("n", "<C-[>", function()
+  if vim.bo.filetype ~= "oil" then
+    smart_edge_resize("left")
+  end
+end, { silent = true })
+
