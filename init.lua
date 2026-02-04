@@ -187,11 +187,30 @@ require("lazy").setup({
 --    },
 --
 
-    
+        {
+        "refractalize/oil-git-status.nvim",
+        dependencies = { "stevearc/oil.nvim" },
+        config = true,
+        },
+
         {
             "stevearc/oil.nvim",
             lazy = false,
-            dependencies = { "nvim-tree/nvim-web-devicons" },
+            dependencies = {
+                "nvim-tree/nvim-web-devicons",
+                {
+                "malewicz1337/oil-git.nvim",
+                dependencies = { "stevearc/oil.nvim" },
+                opts = {
+                    -- defaults are fine; tweak if you want:
+                    show_file_highlights = true,
+                    show_directory_highlights = true,
+                    show_file_symbols = true,
+                    show_directory_symbols = true,
+                    symbol_position = "eol", -- "eol" | "signcolumn" | "none"
+                },
+                },
+            },
             config = function()
                 local oil = require("oil")
 
@@ -352,6 +371,9 @@ require("lazy").setup({
                 oil.setup({
                     default_file_explorer = true,
                     columns = { "icon" },
+                    win_options = {
+                        signcolumn = "yes:2", -- or "auto:2"
+                    },
                     view_options = { show_hidden = false },
                     keymaps = {
                         ["g?"] = "actions.show_help",
@@ -567,12 +589,74 @@ local function cleanup_history(args)
     end
 end
 
+local function oil_git_branch(dir)
+  vim.fn.system({ "git", "-C", dir, "rev-parse", "--git-dir" })
+  if vim.v.shell_error ~= 0 then
+    return "no repo"
+  end
+
+  local branch = vim.fn.systemlist({
+    "git", "-C", dir, "branch", "--show-current"
+  })[1] or ""
+
+  if branch == "" then
+    branch = vim.fn.systemlist({
+      "git", "-C", dir, "rev-parse", "--short", "HEAD"
+    })[1] or ""
+  end
+
+  --return string.format(" %s  %s", branch, diff)
+  return string.format(" %s", branch)
+end
+
+local function oil_git_diff(dir)
+  vim.fn.system({ "git", "-C", dir, "rev-parse", "--git-dir" })
+  if vim.v.shell_error ~= 0 then
+    return "no repo"
+  end
+
+
+
+  local diff = vim.fn.systemlist({
+    "git", "-C", dir, "diff", "--shortstat"
+  })[1] or ""
+
+  --return string.format(" %s  %s", branch, diff)
+  return string.format("%s", diff)
+end
+
+
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "oil",
+  callback = function()
+    local oil = require("oil")
+    local dir = oil.get_current_dir()
+
+    if not dir then
+      vim.wo.winbar = ""
+      return
+    end
+
+    vim.wo.winbar =
+      "%#OilGit#" .. oil_git_branch(dir) .. "%*"
+  end,
+})
 vim.api.nvim_create_autocmd("BufEnter", { callback = function ()
     update_history()
     vim.wo.relativenumber = true
     vim.wo.cursorline = false
     vim.wo.winhighlight = "LineNr:LineNr,LineNrAbove:LineNrAbove,LineNrBelow:LineNrBelow"
-end})
+
+    if vim.bo.filetype ~= "oil" then return end
+
+    local oil = require("oil")
+    local dir = oil.get_current_dir()
+    if not dir then return end
+
+    vim.wo.statusline = "%#OilGit#" .. oil_git_diff(dir) .. "%*"
+
+end,})
 vim.api.nvim_create_autocmd("BufDelete", { callback = cleanup_history })
 
 local function navigate_local_history(delta)
@@ -1043,7 +1127,7 @@ local function smart_edge_resize(dir)
       vim.cmd("vertical resize -" .. delta)
       vim.api.nvim_set_current_win(cur)
     else
-      vim.cmd("vertical resize +" .. delta)
+      vim.cmd("vertical resize -" .. delta)
     end
   else
     if win_exists("wincmd h") then
@@ -1051,21 +1135,31 @@ local function smart_edge_resize(dir)
       vim.cmd("vertical resize +" .. delta)
       vim.api.nvim_set_current_win(cur)
     else
-      vim.cmd("vertical resize -" .. delta)
+      vim.cmd("vertical resize +" .. delta)
     end
   end
 end
 
 
 vim.keymap.set("n", "<C-]>", function()
-  if vim.bo.filetype ~= "oil" then
+  --if vim.bo.filetype ~= "oil" then
     smart_edge_resize("right")
-  end
+  --end
 end, { silent = true })
 
 vim.keymap.set("n", "<C-[>", function()
-  if vim.bo.filetype ~= "oil" then
+  --if vim.bo.filetype ~= "oil" then
     smart_edge_resize("left")
-  end
+  --end
 end, { silent = true })
+
+
+
+vim.api.nvim_set_hl(0, "OilGit", {
+  fg = "#5a7a9a",
+  bg = "NONE",
+  italic = true,
+})
+
+
 
