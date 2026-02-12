@@ -410,6 +410,64 @@ require("lazy").setup({
     --    lazy = false,
     --    priority = 1000,
     --},
+    --
+
+{
+  "goolord/alpha-nvim",
+  lazy = false,
+  dependencies = { "nvim-tree/nvim-web-devicons" },
+  config = function()
+    local alpha = require("alpha")
+    local dashboard = require("alpha.themes.dashboard")
+
+
+dashboard.section.header.val = {
+  "         __",
+  "        / /\\",
+  "       / /  \\",
+  "      / /    \\__________",
+  "     / /      \\        /\\",
+  "    /_/        \\      / /",
+  " ___\\ \\      ___\\____/_/_",
+  "/____\\ \\    /___________/\\",
+  "\\     \\ \\   \\           \\ \\",
+  " \\     \\ \\   \\____       \\ \\",
+  "  \\     \\ \\  /   /\\       \\ \\",
+  "   \\   / \\_\\/   / /        \\ \\",
+  "    \\ /        / /__________\\/",
+  "     /        / /     /",
+  "    /        / /     /",
+  "   /________/ /\\    /",
+  "   \\________\\/\\ \\  /",
+  "               \\_\\/",
+}
+
+    dashboard.section.buttons.val = {
+      dashboard.button("f", "󰈞  Find file", ":Telescope find_files<CR>"),
+      dashboard.button("g", "󰊄  Live grep", ":Telescope live_grep<CR>"),
+      dashboard.button("r", "  Recent", ":Telescope oldfiles<CR>"),
+      dashboard.button("q", "󰅚  Quit", ":qa<CR>"),
+    }
+
+    alpha.setup(dashboard.config)
+
+    -- Hide statusline/tabline while dashboard is open (optional)
+    vim.api.nvim_create_autocmd("FileType", {
+      pattern = "alpha",
+      callback = function()
+        vim.opt_local.laststatus = 0
+        vim.opt_local.showtabline = 0
+      end,
+    })
+    vim.api.nvim_create_autocmd("BufUnload", {
+      buffer = 0,
+      callback = function()
+        vim.opt.laststatus = 2
+        vim.opt.showtabline = 0
+      end,
+    })
+  end,
+},
     {
         "vague-theme/vague.nvim",
         lazy = false,
