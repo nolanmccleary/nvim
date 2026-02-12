@@ -37,156 +37,6 @@ require("lazy").setup({
   install = { missing = true },
 
   spec = {
---    {
---        "nvim-tree/nvim-tree.lua",
---        lazy=false,
---        dependencies = { "nvim-tree/nvim-web-devicons" },
---        --keys = {
---            --{ "<C-n>", "<cmd>NvimTreeToggle | setlocal relativenumber <cr>", silent = true },
---        --},
---      
---        config = function()
---        local function ovrd_on_attach(bufnr)
---            local api = require("nvim-tree.api")
---
---            local function opts(desc)
---            return {
---                desc = "nvim-tree: " .. desc,
---                buffer = bufnr,
---                noremap = true,
---                silent = true,
---                nowait = true,
---            }
---            end
---
---            api.config.mappings.default_on_attach(bufnr)
---
---            -- ===== 1) AUTO-RESIZE TREE TO FIT LONGEST VISIBLE LINE =====
---            local resize_pending = false
---
---            local function compute_needed_width()
---            local view = require("nvim-tree.view")
---            if not view.is_visible() then return nil end
---
---            local wnr = view.get_winnr()
---            if not wnr then return nil end
---
---            local tree_buf = vim.api.nvim_win_get_buf(wnr)
---            if not vim.api.nvim_buf_is_valid(tree_buf) then return nil end
---
---            local lines = vim.api.nvim_buf_get_lines(tree_buf, 0, -1, false)
---
---            local maxw = 0
---            for _, line in ipairs(lines) do
---                local w = vim.fn.strdisplaywidth(line)
---                if w > maxw then maxw = w end
---            end
---
---            -- padding so the last character isn't right on the edge
---            maxw = maxw + 2
---
---            -- min + max clamp (max = % of screen so it doesn't eat your editor)
---            local minw = 30
---            local maxw_cap = math.floor(vim.o.columns * 0.70)
---
---            if maxw < minw then maxw = minw end
---            if maxw > maxw_cap then maxw = maxw_cap end
---
---            return maxw
---            end
---
---            local function resize_tree()
---            local target = compute_needed_width()
---            if not target then return end
---            pcall(api.tree.resize, { width = target })
---            end
---
---            local function schedule_resize()
---            if resize_pending then return end
---            resize_pending = true
---            vim.defer_fn(function()
---                resize_pending = false
---                resize_tree()
---            end, 30)
---            end
---
---            -- Resize when tree opens / cursor moves / view changes
---            vim.api.nvim_create_autocmd(
---            { "BufEnter", "CursorMoved", "VimResized", "WinResized" },
---            { buffer = bufnr, callback = schedule_resize }
---            )
---
---            -- Your existing split open mappings
---            vim.keymap.set("n", "vl", function()
---            vim.opt.splitright = false
---            api.node.open.vertical()
---            schedule_resize()
---            end, opts("Vertical Split Left"))
---
---            vim.keymap.set("n", "vr", function()
---            vim.opt.splitright = true
---            api.node.open.vertical()
---            schedule_resize()
---            end, opts("Vertical Split Right"))
---
---            -- ===== 2) "\" CLOSES THE FOLDER YOU'RE INSIDE =====
---            -- If you're on a file inside an opened folder -> close its parent folder.
---            -- If you're on an opened folder -> close that folder.
---            
---            -- "\" CLOSES THE FOLDER YOU'RE INSIDE (works on new nvim-tree)
---            vim.keymap.set("n", "\\", function()
---                local node = api.tree.get_node_under_cursor()
---                if not node then return end
---
---                -- If cursor is on an OPEN folder -> close it
---                if node.type == "directory" and node.open then
---                    api.node.open.edit() -- toggles folder open/close
---                else
---                    -- If cursor is on a file (or anything inside a folder) -> close the parent folder
---                    api.node.navigate.parent_close()
---                end
---
---                schedule_resize()
---            end, opts("Close folder you're inside"))
---
---            -- One resize right after attach
---            schedule_resize()
---        end
---
---        require("nvim-tree").setup({
---            on_attach = ovrd_on_attach,
---            
---            sync_root_with_cwd = true,
---            respect_buf_cwd = true,
---            update_focused_file = {
---            enable = true,
---            update_root = true,
---            },
---            view = {
---            adaptive_size = true, -- lets nvim-tree resize itself instead of fixed width
---            -- You can still set a minimum width:
---            width = { min = 30 },
---            },
---
---            renderer = {
---            highlight_opened_files = "none",
---            icons = {
---                show = { file = true, folder = true, folder_arrow = true, git = true },
---            },
---            },
---
---            git = { enable = true, ignore = false },
---        })
---        end,
---    
---
---
---
---
---
---    },
---
-
         {
         "refractalize/oil-git-status.nvim",
         dependencies = { "stevearc/oil.nvim" },
@@ -488,7 +338,20 @@ require("lazy").setup({
             end)
 
     	end
-    },  
+    }, 
+    {
+        "folke/flash.nvim",
+        event = "VeryLazy",
+        ---@type Flash.Config
+        opts = {},
+        keys = {
+            { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
+            { "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
+            { "r", mode = "o", function() require("flash").remote() end, desc = "Remote Flash" },
+            { "R", mode = { "o", "x" }, function() require("flash").treesitter_search() end, desc = "Treesitter Search" },
+            { "<c-s>", mode = { "c" }, function() require("flash").toggle() end, desc = "Toggle Flash Search" },
+        },
+    },
     --{
     --    "rebelot/kanagawa.nvim",
     --    lazy = false,
@@ -684,32 +547,7 @@ vim.keymap.set("n", "[c", function() navigate_local_history(-1) end, { desc = "L
 vim.keymap.set("n", "]c", function() navigate_local_history(1) end, { desc = "Local Forward" })
 
 
-local function global_find_forward()
-  local c = vim.fn.getcharstr()
-  if c == "" then return end
 
-  local pat = "\\V" .. vim.fn.escape(c, "\\")
-  local n = vim.v.count1
-
-  for _ = 1, n do
-    vim.fn.search(pat, "W")
-  end
-end
-
-local function global_find_backward()
-  local c = vim.fn.getcharstr()
-  if c == "" then return end
-
-  local pat = "\\V" .. vim.fn.escape(c, "\\")
-  local n = vim.v.count1
-
-  for _ = 1, n do
-    vim.fn.search(pat, "bW")
-  end
-end
-
-vim.keymap.set("n", "f", global_find_forward,  { noremap = true, silent = true })
-vim.keymap.set("n", "F", global_find_backward, { noremap = true, silent = true })
 
 
 _G.last_motion = nil
@@ -792,30 +630,6 @@ vim.keymap.set("v", "\\", function()
 end, { noremap = true, silent = true, desc = "Repeat last motion" })
 
 
-
-
-
-local last_char = nil
-local last_dir = 1 -- 1 = forward, -1 = backward
-
-local function global_find(dir)
-  local c = vim.fn.getcharstr()
-  if c == "" then return end
-
-  last_char = c
-  last_dir = dir
-
-  local pat = "\\V" .. vim.fn.escape(c, "\\")
-  local flags = (dir == 1) and "W" or "bW"
-
-  for _ = 1, vim.v.count1 do
-    vim.fn.search(pat, flags)
-  end
-end
-
-vim.keymap.set("n", "f", function() global_find(1) end,  { noremap = true, silent = true })
-vim.keymap.set("n", "F", function() global_find(-1) end, { noremap = true, silent = true })
-
 vim.keymap.set("n", ";", function()
   if not last_char then return end
   local pat = "\\V" .. vim.fn.escape(last_char, "\\")
@@ -891,9 +705,6 @@ local function swap_with_wrap(dir) -- dir = -1 (left) or +1 (right)
   vim.api.nvim_win_set_buf(curwin, neighbuf)
   vim.api.nvim_win_set_buf(neighwin, curbuf)
 
-  if history then
-    history[curwin], history[neighwin] = history[neighwin], history[curwin]
-  end
 end
 
 vim.keymap.set("n", "[s", function() swap_with_wrap(-1) end, { desc = "Swap with left window (wrap)" })
@@ -924,23 +735,38 @@ vim.api.nvim_create_autocmd("FileType", {
 do
   local ok, telescope = pcall(require, "telescope")
   if ok then
+    local actions = require("telescope.actions")
+    local action_state = require("telescope.actions.state")
+
+    local function open_vsplit_dir(prompt_bufnr, dir) -- dir = "left" | "right"
+      local entry = action_state.get_selected_entry()
+      actions.close(prompt_bufnr)
+      if not entry then return end
+
+      -- telescope entries vary; this is the most common
+      local path = entry.path or entry.filename or (entry.value and tostring(entry.value)) or nil
+      if not path or path == "" then return end
+
+      local old = vim.o.splitright
+      vim.o.splitright = (dir == "right")
+      vim.cmd("vsplit " .. vim.fn.fnameescape(path))
+      vim.o.splitright = old
+    end
+
     telescope.setup({
       defaults = {
         vimgrep_arguments = {
-          "rg",
-          "--color=never",
-          "--no-heading",
-          "--with-filename",
-          "--line-number",
-          "--column",
-          "--smart-case",
-          -- IMPORTANT: no "--no-ignore", no "--hidden"
+          "rg","--color=never","--no-heading","--with-filename","--line-number","--column","--smart-case",
         },
-      },
-      pickers = {
-        find_files = {
-          hidden = false,   -- normal find_files
-          no_ignore = false -- respects .gitignore
+        mappings = {
+          i = {
+            ["<C-l>"] = function(buf) open_vsplit_dir(buf, "right") end,
+            ["<C-k>"] = function(buf) open_vsplit_dir(buf, "left") end,
+          },
+          n = {
+            ["<C-l>"] = function(buf) open_vsplit_dir(buf, "right") end,
+            ["<C-k>"] = function(buf) open_vsplit_dir(buf, "left") end,
+          },
         },
       },
     })
@@ -1003,6 +829,9 @@ end, {
 
 --require("kanagawa").setup({ transparent = true })
 vim.cmd.colorscheme("vague")
+vim.api.nvim_set_hl(0, "FlashLabel",   { fg = "#ff0000", bg = "NONE", bold = true })
+vim.api.nvim_set_hl(0, "FlashCurrent", { fg = "#ff0000", bg = "NONE", bold = true })
+-- vim.api.nvim_set_hl(0, "FlashMatch",   { fg = "#777777", bg = "NONE" })
 
 vim.api.nvim_set_hl(0, "StatusLine", { fg = "#5a7a6a", bg = "NONE", bold = true })
 vim.api.nvim_set_hl(0, "StatusLineNC", { fg = "#333333", bg = "NONE" })
@@ -1141,16 +970,16 @@ local function smart_edge_resize(dir)
 end
 
 
-vim.keymap.set("n", "<C-]>", function()
-  --if vim.bo.filetype ~= "oil" then
+vim.keymap.set("n", "<C-l>", function()
+  if vim.bo.filetype ~= "oil" then
     smart_edge_resize("right")
-  --end
+  end
 end, { silent = true })
 
-vim.keymap.set("n", "<C-[>", function()
-  --if vim.bo.filetype ~= "oil" then
+vim.keymap.set("n", "<C-k>", function()
+  if vim.bo.filetype ~= "oil" then
     smart_edge_resize("left")
-  --end
+  end
 end, { silent = true })
 
 
