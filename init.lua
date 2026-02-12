@@ -260,8 +260,61 @@ require("lazy").setup({
                 })
             end,
         },
+    {
+        "christopher-francisco/tmux-status.nvim",
+        lazy = false,
+        opts = {},
+    },
+   {
+  "nvim-lualine/lualine.nvim",
+  lazy = false,
+  dependencies = { "nvim-tree/nvim-web-devicons" },
+  config = function()
+    local tmux_status = require("tmux-status")
 
-    
+    require("lualine").setup({
+      options = {
+        icons_enabled = true,
+        theme = "auto",
+        component_separators = "",
+        section_separators = "",
+      },
+      sections = {
+        lualine_a = { "mode" },
+        lualine_b = { "branch",
+
+
+{ "diff", source = function()
+    local gs = vim.b.gitsigns_status_dict
+    if not gs then return nil end
+    return { added = gs.added, modified = gs.changed, removed = gs.removed }
+  end
+},
+
+
+    },
+        lualine_c = {
+          "filename",
+          {
+            tmux_status.tmux_windows,
+            cond = tmux_status.show,
+            padding = { left = 3 },
+          },
+        },
+        lualine_x = {},
+        lualine_y = {},
+        lualine_z = {
+          {
+            tmux_status.tmux_session,
+            cond = tmux_status.show,
+            padding = { left = 3 },
+          },
+        },
+      },
+    })
+  end,
+}, 
+
 
     {
       "ellisonleao/glow.nvim",
@@ -452,74 +505,7 @@ local function cleanup_history(args)
     end
 end
 
-local function oil_git_branch(dir)
-  vim.fn.system({ "git", "-C", dir, "rev-parse", "--git-dir" })
-  if vim.v.shell_error ~= 0 then
-    return "no repo"
-  end
 
-  local branch = vim.fn.systemlist({
-    "git", "-C", dir, "branch", "--show-current"
-  })[1] or ""
-
-  if branch == "" then
-    branch = vim.fn.systemlist({
-      "git", "-C", dir, "rev-parse", "--short", "HEAD"
-    })[1] or ""
-  end
-
-  --return string.format(" %s  %s", branch, diff)
-  return string.format(" %s", branch)
-end
-
-local function oil_git_diff(dir)
-  vim.fn.system({ "git", "-C", dir, "rev-parse", "--git-dir" })
-  if vim.v.shell_error ~= 0 then
-    return "no repo"
-  end
-
-
-
-  local diff = vim.fn.systemlist({
-    "git", "-C", dir, "diff", "--shortstat"
-  })[1] or ""
-
-  --return string.format(" %s  %s", branch, diff)
-  return string.format("%s", diff)
-end
-
-
-
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "oil",
-  callback = function()
-    local oil = require("oil")
-    local dir = oil.get_current_dir()
-
-    if not dir then
-      vim.wo.winbar = ""
-      return
-    end
-
-    vim.wo.winbar =
-      "%#OilGit#" .. oil_git_branch(dir) .. "%*"
-  end,
-})
-vim.api.nvim_create_autocmd("BufEnter", { callback = function ()
-    update_history()
-    vim.wo.relativenumber = true
-    vim.wo.cursorline = false
-    vim.wo.winhighlight = "LineNr:LineNr,LineNrAbove:LineNrAbove,LineNrBelow:LineNrBelow"
-
-    if vim.bo.filetype ~= "oil" then return end
-
-    local oil = require("oil")
-    local dir = oil.get_current_dir()
-    if not dir then return end
-
-    vim.wo.statusline = "%#OilGit#" .. oil_git_diff(dir) .. "%*"
-
-end,})
 vim.api.nvim_create_autocmd("BufDelete", { callback = cleanup_history })
 
 local function navigate_local_history(delta)
@@ -981,14 +967,5 @@ vim.keymap.set("n", "<C-k>", function()
     smart_edge_resize("left")
   end
 end, { silent = true })
-
-
-
-vim.api.nvim_set_hl(0, "OilGit", {
-  fg = "#5a7a9a",
-  bg = "NONE",
-  italic = true,
-})
-
 
 
