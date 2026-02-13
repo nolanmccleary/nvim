@@ -71,8 +71,23 @@ vim.lsp.config("slang-server", {
   },
 })
 
+
+vim.filetype.add({
+  extension = { typ = "typst" },
+})
+
+vim.lsp.config("tinymist", {
+  cmd = { "tinymist" },
+  filetypes = { "typst" },
+  root_markers = { ".git" },
+  capabilities = capabilities,
+})
+
+
+vim.lsp.enable("tinymist")
 vim.lsp.enable("slang-server")
 vim.lsp.enable("bashls")
 vim.lsp.enable("lua_ls")
 vim.lsp.enable("pyright")
 vim.lsp.enable("clangd")
+vim.lsp.enable("tinymist")
