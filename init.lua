@@ -563,6 +563,11 @@ local function cleanup_history(args)
     end
 end
 
+vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "WinEnter" }, {
+    callback = function()
+        vim.schedule(update_history)
+    end,
+})
 
 vim.api.nvim_create_autocmd("BufDelete", { callback = cleanup_history })
 
@@ -873,8 +878,8 @@ end, {
 
 --require("kanagawa").setup({ transparent = true })
 vim.cmd.colorscheme("vague")
-vim.api.nvim_set_hl(0, "FlashLabel",   { fg = "#ff0000", bg = "NONE", bold = true })
-vim.api.nvim_set_hl(0, "FlashCurrent", { fg = "#ff0000", bg = "NONE", bold = true })
+vim.api.nvim_set_hl(0, "FlashLabel",   { fg = "#ff0000", bg = "NONE", bold = false })
+vim.api.nvim_set_hl(0, "FlashCurrent", { fg = "#ff0000", bg = "NONE", bold = false })
 -- vim.api.nvim_set_hl(0, "FlashMatch",   { fg = "#777777", bg = "NONE" })
 
 vim.api.nvim_set_hl(0, "StatusLine", { fg = "#5a7a6a", bg = "NONE", bold = true })
