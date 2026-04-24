@@ -412,62 +412,6 @@ require("lazy").setup({
     --},
     --
 
-{
-  "goolord/alpha-nvim",
-  lazy = false,
-  dependencies = { "nvim-tree/nvim-web-devicons" },
-  config = function()
-    local alpha = require("alpha")
-    local dashboard = require("alpha.themes.dashboard")
-
-
-dashboard.section.header.val = {
-  "         __",
-  "        / /\\",
-  "       / /  \\",
-  "      / /    \\__________",
-  "     / /      \\        /\\",
-  "    /_/        \\      / /",
-  " ___\\ \\      ___\\____/_/_",
-  "/____\\ \\    /___________/\\",
-  "\\     \\ \\   \\           \\ \\",
-  " \\     \\ \\   \\____       \\ \\",
-  "  \\     \\ \\  /   /\\       \\ \\",
-  "   \\   / \\_\\/   / /        \\ \\",
-  "    \\ /        / /__________\\/",
-  "     /        / /     /",
-  "    /        / /     /",
-  "   /________/ /\\    /",
-  "   \\________\\/\\ \\  /",
-  "               \\_\\/",
-}
-
-    dashboard.section.buttons.val = {
-      dashboard.button("f", "󰈞  Find file", ":Telescope find_files<CR>"),
-      dashboard.button("g", "󰊄  Live grep", ":Telescope live_grep<CR>"),
-      dashboard.button("r", "  Recent", ":Telescope oldfiles<CR>"),
-      dashboard.button("q", "󰅚  Quit", ":qa<CR>"),
-    }
-
-    alpha.setup(dashboard.config)
-
-    -- Hide statusline/tabline while dashboard is open (optional)
-    vim.api.nvim_create_autocmd("FileType", {
-      pattern = "alpha",
-      callback = function()
-        vim.opt_local.laststatus = 0
-        vim.opt_local.showtabline = 0
-      end,
-    })
-    vim.api.nvim_create_autocmd("BufUnload", {
-      buffer = 0,
-      callback = function()
-        vim.opt.laststatus = 2
-        vim.opt.showtabline = 0
-      end,
-    })
-  end,
-},
     {
         "vague-theme/vague.nvim",
         lazy = false,
@@ -851,6 +795,94 @@ vim.api.nvim_create_autocmd("BufReadCmd", {
   end,
 })
 
+
+vim.api.nvim_create_autocmd("BufReadCmd", {
+  pattern = { "*.pdf" },
+  callback = function(args)
+    local file = args.match -- full path Neovim is trying to read
+
+    if vim.fn.executable("zathura") ~= 1 then
+      vim.notify("zathura not found in PATH", vim.log.levels.WARN)
+      return
+    end
+
+    -- Move away from the pdf buffer so we don't "consume" the current window
+    local alt = vim.fn.bufnr("#")
+    if alt > 0 and vim.api.nvim_buf_is_valid(alt) then
+      vim.cmd("buffer #")
+    else
+      vim.cmd("enew")
+      vim.bo.buftype = "nofile"
+      vim.bo.bufhidden = "wipe"
+      vim.bo.swapfile = false
+    end
+
+    -- Launch external viewer
+    vim.fn.jobstart({ "zathura", file }, { detach = true })
+
+    -- Delete the pdf buffer Neovim was about to open
+    pcall(vim.api.nvim_buf_delete, args.buf, { force = true })
+  end,
+})
+
+vim.api.nvim_create_autocmd("BufReadCmd", {
+  pattern = { "*.png", "*.jpg", "*.jpeg", "*.webp", "*.gif" },
+  callback = function(args)
+    local file = args.match
+
+    if vim.fn.executable("open") ~= 1 then
+      vim.notify("'open' not found (macOS only)", vim.log.levels.WARN)
+      return
+    end
+
+    -- preserve the current window (dummy buffer / alt buffer)
+    local alt = vim.fn.bufnr("#")
+    if alt > 0 and vim.api.nvim_buf_is_valid(alt) then
+      vim.cmd("buffer #")
+    else
+      vim.cmd("enew")
+      vim.bo.buftype = "nofile"
+      vim.bo.bufhidden = "wipe"
+      vim.bo.swapfile = false
+    end
+
+    -- open with default app (Preview, etc.)
+    vim.fn.jobstart({ "open", file }, { detach = true })
+
+    -- delete the buffer Neovim was about to read
+    pcall(vim.api.nvim_buf_delete, args.buf, { force = true })
+  end,
+})
+
+vim.api.nvim_create_autocmd("BufReadCmd", {
+  pattern = { "*.mp4", "*.mov", "*.mkv", "*.webm" },
+  callback = function(args)
+    local file = args.match
+
+    if vim.fn.executable("open") ~= 1 then
+      vim.notify("'open' not found (macOS only)", vim.log.levels.WARN)
+      return
+    end
+
+    -- Preserve window like your GTKWave logic
+    local alt = vim.fn.bufnr("#")
+    if alt > 0 and vim.api.nvim_buf_is_valid(alt) then
+      vim.cmd("buffer #")
+    else
+      vim.cmd("enew")
+      vim.bo.buftype = "nofile"
+      vim.bo.bufhidden = "wipe"
+      vim.bo.swapfile = false
+    end
+
+    -- Launch default video app (QuickTime/VLC/etc)
+    vim.fn.jobstart({ "open", file }, { detach = true })
+
+    pcall(vim.api.nvim_buf_delete, args.buf, { force = true })
+  end,
+})
+
+
 vim.api.nvim_create_user_command('Gd', function(opts)
     local target_file = opts.args
     if vim.fn.filereadable(target_file) == 0 then
@@ -877,6 +909,7 @@ end, {
 
 
 --require("kanagawa").setup({ transparent = true })
+-- require("vague").setup({ transparent = true })
 vim.cmd.colorscheme("vague")
 vim.api.nvim_set_hl(0, "FlashLabel",   { fg = "#ff0000", bg = "NONE", bold = false })
 vim.api.nvim_set_hl(0, "FlashCurrent", { fg = "#ff0000", bg = "NONE", bold = false })
