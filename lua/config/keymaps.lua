@@ -54,6 +54,18 @@ vim.keymap.set("n", "]w", function()
   if cur == vim.api.nvim_get_current_win() then vim.cmd("wincmd t") end
 end, { desc = "Go to right window (wrap)" })
 
+vim.keymap.set("n", "[e", function()
+  local cur = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd k")
+  if cur == vim.api.nvim_get_current_win() then vim.cmd("wincmd b") end
+end, { desc = "Go to window above (wrap)" })
+
+vim.keymap.set("n", "]e", function()
+  local cur = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd j")
+  if cur == vim.api.nvim_get_current_win() then vim.cmd("wincmd t") end
+end, { desc = "Go to window below (wrap)" })
+
 -- ── Window swap (wrapping) ────────────────────────────────────────────────────
 
 local function is_swappable_win(win)
