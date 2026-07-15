@@ -83,6 +83,7 @@ vim.lsp.config("tinymist", {
 
 vim.lsp.enable("tinymist")
 vim.lsp.enable("slang-server")
+vim.lsp.enable("hls")
 vim.lsp.enable("bashls")
 vim.lsp.enable("lua_ls")
 vim.lsp.enable("pyright")
