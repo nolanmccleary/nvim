@@ -127,17 +127,25 @@ return {
           return
         end
 
-        local candidates = {}
+        -- Prefer real file windows, but fall back to any non-oil window
+        -- (e.g. the "nofile" scratch buffer left behind after opening a PNG
+        -- externally) so we reuse it instead of cloning the sidebar.
+        local normal, any = {}, {}
         for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-          local buf = vim.api.nvim_win_get_buf(w)
-          if vim.bo[buf].buftype == "" and vim.bo[buf].filetype ~= "oil" then
-            table.insert(candidates, w)
+          if not is_oil_win(w) then
+            table.insert(any, w)
+            if vim.bo[vim.api.nvim_win_get_buf(w)].buftype == "" then
+              table.insert(normal, w)
+            end
           end
         end
+        local candidates = (#normal > 0) and normal or any
 
         local target
         if #candidates == 0 then
-          vim.cmd("vsplit")
+          -- Oil is the only window: open a real editing area on the far right
+          -- rather than vsplitting (which would clone the oil sidebar).
+          vim.cmd("botright vsplit")
           target = vim.api.nvim_get_current_win()
           vim.api.nvim_win_set_width(oil_sidebar_win, 35)
         elseif #candidates == 1 then
@@ -166,6 +174,7 @@ return {
 
       oil.setup({
         default_file_explorer = true,
+        watch_for_changes = true,
         columns     = { "icon" },
         win_options = { signcolumn = "yes:2" },
         view_options = { show_hidden = false },

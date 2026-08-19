@@ -1,10 +1,10 @@
 return {
   {
-    "vague-theme/vague.nvim",
+    "savq/melange-nvim",
     lazy     = false,
     priority = 1000,
     config = function()
-      vim.cmd.colorscheme("vague")
+      vim.cmd.colorscheme("melange")
 
       vim.api.nvim_set_hl(0, "FlashLabel",   { fg = "#ff0000", bg = "NONE", bold = false })
       vim.api.nvim_set_hl(0, "FlashCurrent", { fg = "#ff0000", bg = "NONE", bold = false })
