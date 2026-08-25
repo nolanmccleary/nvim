@@ -2,6 +2,23 @@ vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(args)
     local opts = { buffer = args.buf, silent = true, noremap = true }
     vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+
+    -- Open the definition in a vertical split. The split is created from the
+    -- current window (so it shows this same file) and focus moves into it
+    -- before jumping, meaning the new pane holds the definition and a plain
+    -- `:q` right after closes it and returns you here.
+    local function def_split(side)
+      return function()
+        local sr = vim.o.splitright
+        vim.o.splitright = (side == "right")
+        vim.cmd("vsplit")
+        vim.o.splitright = sr
+        vim.lsp.buf.definition()
+      end
+    end
+    vim.keymap.set("n", "gsl", def_split("right"), opts) -- split def on the RHS
+    vim.keymap.set("n", "gsk", def_split("left"),  opts) -- split def on the LHS
+
     vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
     vim.keymap.set("n", "gi", vim.lsp.buf.implementation, opts)
     vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
@@ -77,6 +94,21 @@ vim.lsp.config("tinymist", {
   cmd = { "tinymist" },
   filetypes = { "typst" },
   root_markers = { ".git" },
+  capabilities = capabilities,
+})
+
+
+vim.lsp.config("clangd", {
+  cmd = {
+    "/opt/homebrew/opt/llvm/bin/clangd",
+    "--background-index",
+    "--clang-tidy",
+    "--header-insertion=never",
+    "--completion-style=detailed",
+    "--function-arg-placeholders",
+    "--pch-storage=memory",
+    "-j=4",
+  },
   capabilities = capabilities,
 })
 

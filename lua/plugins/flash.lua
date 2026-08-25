@@ -2,7 +2,11 @@ return {
   {
     "folke/flash.nvim",
     event = "VeryLazy",
-    opts  = {},
+    opts  = {
+      -- Widen the single-key label pool beyond the 26-letter default so more
+      -- targets get a direct label before flash forces you to refine the search.
+      labels = "asdfghjklqwertyuiopzxcvbnm1234567890",
+    },
     keys  = {
       { "s",     mode = { "n", "x", "o" }, function() require("flash").jump() end,             desc = "Flash" },
       { "S",     mode = { "n", "x", "o" }, function() require("flash").treesitter() end,        desc = "Flash Treesitter" },
