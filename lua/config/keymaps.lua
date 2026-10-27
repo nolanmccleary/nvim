@@ -143,6 +143,11 @@ vim.keymap.set("n", "<C-k>", function()
   if vim.bo.filetype ~= "oil" then smart_edge_resize("left") end
 end, { silent = true })
 
+-- ── Insert-mode line motion ──────────────────────────────────────────────────
+-- C-l / C-k : jump to end / start of line without leaving insert.
+vim.keymap.set("i", "<C-l>", "<End>",  { desc = "Insert: end of line" })
+vim.keymap.set("i", "<C-k>", "<C-o>^", { desc = "Insert: start of line" })
+
 -- ── Per-window buffer history ─────────────────────────────────────────────────
 
 local history = {}

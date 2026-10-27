@@ -41,7 +41,7 @@ cmp.setup({
     ["<Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
-      elseif luasnip.expand_or_jumpable() then
+      elseif luasnip.expand_or_locally_jumpable() then
         luasnip.expand_or_jump()
       else
         fallback()
@@ -51,7 +51,7 @@ cmp.setup({
     ["<S-Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_prev_item()
-      elseif luasnip.jumpable(-1) then
+      elseif luasnip.locally_jumpable(-1) then
         luasnip.jump(-1)
       else
         fallback()
@@ -113,6 +113,24 @@ vim.lsp.config("clangd", {
 })
 
 
+vim.lsp.config("asm-lsp", {
+  cmd = { "/opt/homebrew/bin/asm-lsp" },
+  filetypes = { "asm", "nasm" },
+  root_markers = { ".asm-lsp.toml", ".git" },
+  capabilities = capabilities,
+})
+
+
+vim.lsp.config("rust-analyzer", {
+  cmd = { "/Users/nolan/.cargo/bin/rust-analyzer" },
+  filetypes = { "rust" },
+  root_markers = { "Cargo.toml", "Cargo.lock", ".git" },
+  capabilities = capabilities,
+})
+
+
+vim.lsp.enable("rust-analyzer")
+vim.lsp.enable("asm-lsp")
 vim.lsp.enable("tinymist")
 vim.lsp.enable("slang-server")
 vim.lsp.enable("hls")
