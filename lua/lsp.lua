@@ -100,7 +100,7 @@ vim.lsp.config("tinymist", {
 
 vim.lsp.config("clangd", {
   cmd = {
-    "/opt/homebrew/opt/llvm/bin/clangd",
+    "clangd",
     "--background-index",
     "--clang-tidy",
     "--header-insertion=never",
@@ -114,7 +114,7 @@ vim.lsp.config("clangd", {
 
 
 vim.lsp.config("asm-lsp", {
-  cmd = { "/opt/homebrew/bin/asm-lsp" },
+  cmd = { "asm-lsp" },
   filetypes = { "asm", "nasm" },
   root_markers = { ".asm-lsp.toml", ".git" },
   capabilities = capabilities,
@@ -129,6 +129,22 @@ vim.lsp.config("rust-analyzer", {
 })
 
 
+vim.lsp.config("ts_ls", {
+  cmd = { "typescript-language-server", "--stdio" },
+  filetypes = {
+    "javascript",
+    "javascriptreact",
+    "javascript.jsx",
+    "typescript",
+    "typescriptreact",
+    "typescript.tsx",
+  },
+  root_markers = { "tsconfig.json", "jsconfig.json", "package.json", ".git" },
+  capabilities = capabilities,
+})
+
+
+vim.lsp.enable("ts_ls")
 vim.lsp.enable("rust-analyzer")
 vim.lsp.enable("asm-lsp")
 vim.lsp.enable("tinymist")
