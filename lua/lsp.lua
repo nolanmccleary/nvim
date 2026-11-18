@@ -1,3 +1,20 @@
+-- Stock nvim echoes server messages (e.g. rust-analyzer workspace warnings)
+-- to the cmdline with a trailing newline, so every one blocks on a
+-- "Press ENTER" prompt. Route them through vim.notify instead, which fidget
+-- renders as non-blocking popups. Review past messages with :Fidget history.
+vim.lsp.handlers["window/showMessage"] = function(_, params, ctx)
+  local client = vim.lsp.get_client_by_id(ctx.client_id)
+  local name = client and client.name or ("lsp id=" .. ctx.client_id)
+  local level = ({
+    vim.log.levels.ERROR,
+    vim.log.levels.WARN,
+    vim.log.levels.INFO,
+    vim.log.levels.DEBUG,
+  })[params.type] or vim.log.levels.INFO
+  vim.notify(("[%s] %s"):format(name, params.message), level)
+  return params
+end
+
 vim.api.nvim_create_autocmd("LspAttach", {
   callback = function(args)
     local opts = { buffer = args.buf, silent = true, noremap = true }

@@ -182,6 +182,11 @@ return {
           ["g?"] = "actions.show_help",
           ["q"]  = "actions.close",
           ["\\"] = "actions.parent",
+          -- Oil's default refresh key is <C-l>, which the split-open mapping
+          -- below shadows. actions.refresh is also the recovery path when the
+          -- listing freezes: any unsaved edit to the oil buffer silently stops
+          -- the fs watcher, and refresh (:edit!) discards it and re-renders.
+          ["R"]  = "actions.refresh",
           ["<CR>"] = {
             desc     = "Open in chosen window",
             callback = function() open_entry_on_target("edit") end,

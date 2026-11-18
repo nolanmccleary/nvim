@@ -69,6 +69,26 @@ vim.api.nvim_create_autocmd("BufReadCmd", {
   callback = function(args) open_in_external("open", args.buf, args.match) end,
 })
 
+-- ── Pick up external changes to open files ───────────────────────────────────
+-- 'autoread' only applies when something runs :checktime, so without this,
+-- files rewritten on disk (codegen, cargo fmt, git checkout, ...) stay stale
+-- until nvim happens to notice. Modified buffers are never clobbered; they
+-- still get the W12 warning instead.
+
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "TermClose", "TermLeave" }, {
+  callback = function()
+    if vim.fn.getcmdwintype() == "" then
+      vim.cmd("checktime")
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd("FileChangedShellPost", {
+  callback = function(args)
+    vim.notify("Reloaded " .. vim.fn.fnamemodify(args.file, ":~:."), vim.log.levels.INFO)
+  end,
+})
+
 -- ── :Gd <file> — open file and show gitsigns diff ────────────────────────────
 
 vim.api.nvim_create_user_command("Gd", function(opts)
